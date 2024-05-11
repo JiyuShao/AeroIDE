@@ -1,3 +1,5 @@
 packages:
   - 'app/*'
   - 'packages/*'
+  - 'packages/configs/*'
+  - 'packages/extensions/*'

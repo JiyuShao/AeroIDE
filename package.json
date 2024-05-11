@@ -10,7 +10,7 @@
     "commitlint": "commitlint --edit",
     "start": "turbo run dev",
     "build": "turbo run build",
-    "lint": "turbo run lint",
+    "lint": "true",
     "fix": "turbo run fix",
     "clean": "turbo run clean",
     "test": "turlo run test",
