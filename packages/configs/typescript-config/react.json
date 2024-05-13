@@ -1,0 +1,8 @@
+{
+  "extends": "./base.json",
+  "compilerOptions": {
+    "jsx": "react"
+  },
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "REACT_TSCONFIG"
+}
