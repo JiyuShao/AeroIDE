@@ -1,0 +1,4 @@
+{
+  "*.{js,jsx,mjs,cjs,ts,tsx}": ["pnpm run lint --", "prettier --write"],
+  "*.json": ["prettier --write"]
+}

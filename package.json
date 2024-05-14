@@ -12,6 +12,7 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "fix": "turbo run fix",
+    "format": "prettier --write  \"./**/*.{js,jsx,mjs,cjs,ts,tsx,json}\"",
     "clean": "turbo run clean",
     "test": "turlo run test",
     "test:coverage": "pnpm run link && turbo run test:coverage"
