@@ -305,6 +305,9 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
       eslint: ^6.0.0 || ^7.0.0 || >=8.0.0
+    peerDependenciesMeta:
+      eslint:
+        optional: true
     dependencies:
       eslint-visitor-keys: 3.4.3
     dev: true
@@ -564,6 +567,8 @@ packages:
       eslint: ^8.56.0
       typescript: '*'
     peerDependenciesMeta:
+      eslint:
+        optional: true
       typescript:
         optional: true
     dependencies:
@@ -611,6 +616,8 @@ packages:
       eslint: ^8.56.0
       typescript: '*'
     peerDependenciesMeta:
+      eslint:
+        optional: true
       typescript:
         optional: true
     dependencies:
@@ -658,6 +665,8 @@ packages:
       eslint: ^8.56.0
       typescript: '*'
     peerDependenciesMeta:
+      eslint:
+        optional: true
       typescript:
         optional: true
     dependencies:
@@ -742,6 +751,9 @@ packages:
     engines: {node: ^18.18.0 || >=20.0.0}
     peerDependencies:
       eslint: ^8.56.0
+    peerDependenciesMeta:
+      eslint:
+        optional: true
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0
       '@types/json-schema': 7.0.15
