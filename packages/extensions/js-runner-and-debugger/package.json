@@ -10,13 +10,23 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "browser": "./dist/web/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "js-runner-and-debugger.helloWorld",
         "title": "JS Runner & Debugger: Hello World"
+      },
+      {
+        "command": "js-runner-and-debugger.memfs.init",
+        "title": "JS Runner & Debugger: MemFS Init"
+      },
+      {
+        "command": "js-runner-and-debugger.memfs.reset",
+        "title": "JS Runner & Debugger: MemFS reset"
       }
     ]
   },

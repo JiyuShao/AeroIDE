@@ -1,13 +1,16 @@
 {
   "compilerOptions": {
-    "module": "Node16",
+    "module": "ESNext",
+    "moduleResolution": "Node",
     "target": "ES2020",
     "outDir": "dist",
     "lib": ["ES2020"],
     "sourceMap": true,
     "rootDir": "src",
     "strict": true,
+    "skipLibCheck": true,
     "noImplicitReturns": true,
+    "allowSyntheticDefaultImports": true,
     "noFallthroughCasesInSwitch": true,
     "noUnusedParameters": true
   },
