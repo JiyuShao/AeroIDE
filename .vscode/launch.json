@@ -18,7 +18,7 @@
       "outFiles": [
         "${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/web/**/*.js"
       ],
-      "preLaunchTask": "npm: compile-web - packages/extensions/js-runner-and-debugger"
+      "preLaunchTask": "compile-web:packages/extensions/js-runner-and-debugger"
     },
     {
       "name": "Extension Tests: JS Runner and Debugger",
@@ -33,7 +33,7 @@
       "outFiles": [
         "${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/web/**/*.js"
       ],
-      "preLaunchTask": "npm: compile-web - packages/extensions/js-runner-and-debugger"
+      "preLaunchTask": "watch-web:packages/extensions/js-runner-and-debugger"
     }
   ]
 }

@@ -20,7 +20,7 @@ export function registerFileSystem(context: vscode.ExtensionContext) {
   });
 
   // register filesystem commands
-  registerCommand(context, 'init', () => {
+  registerCommand(context, 'initExampleFiles', () => {
     if (initialized) {
       return;
     }
@@ -113,11 +113,6 @@ export function registerFileSystem(context: vscode.ExtensionContext) {
       { create: true, overwrite: true }
     );
     memFs.writeFile(
-      vscode.Uri.parse(`memfs:/large/rnd.foo`),
-      randomData(50000),
-      { create: true, overwrite: true }
-    );
-    memFs.writeFile(
       vscode.Uri.parse(`memfs:/xyz/UPPER.txt`),
       new TextEncoder().encode('UPPER'),
       { create: true, overwrite: true }
@@ -140,18 +135,4 @@ export function registerFileSystem(context: vscode.ExtensionContext) {
     }
     initialized = false;
   });
-}
-
-function randomData(lineCnt: number, lineLen = 155): Uint8Array {
-  const lines: string[] = [];
-  for (let i = 0; i < lineCnt; i++) {
-    let line = '';
-    while (line.length < lineLen) {
-      line += Math.random()
-        .toString(2 + (i % 34))
-        .substr(2);
-    }
-    lines.push(line.substr(0, lineLen));
-  }
-  return new TextEncoder().encode(lines.join('\n'));
 }

@@ -1,5 +1,5 @@
 import vscode from 'vscode';
-import { FS_SCHEME } from '../config';
+import { EXTENSION_NAME, FS_SCHEME } from '../config';
 
 type Commands = {
   [key: string]: () => void;
@@ -28,14 +28,12 @@ export function registerCommand(
   };
   commands[command] = newCallback;
   const disposable = vscode.commands.registerCommand(
-    `js-runner-and-debugger.${FS_SCHEME}.${command}`,
+    `${EXTENSION_NAME}.${FS_SCHEME}.${command}`,
     newCallback
   );
   context.subscriptions.push(disposable);
 }
 
 export function executeCommand(command: string) {
-  vscode.commands.executeCommand(
-    `js-runner-and-debugger.${FS_SCHEME}.${command}`
-  );
+  vscode.commands.executeCommand(`${EXTENSION_NAME}.${FS_SCHEME}.${command}`);
 }

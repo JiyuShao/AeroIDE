@@ -21,7 +21,7 @@
         "title": "JS Runner & Debugger: Hello World"
       },
       {
-        "command": "js-runner-and-debugger.memfs.init",
+        "command": "js-runner-and-debugger.memfs.initExampleFiles",
         "title": "JS Runner & Debugger: MemFS Init"
       },
       {
