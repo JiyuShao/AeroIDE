@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { MemFS } from '../utils/memfs';
 import { registerCommand } from '../utils/commands';
+import { FS_SCHEME } from '../config';
+import { exportFile } from '../utils/file';
 
 export function registerFileSystem(context: vscode.ExtensionContext) {
   const memFs = new MemFS();
@@ -20,7 +22,7 @@ export function registerFileSystem(context: vscode.ExtensionContext) {
   });
 
   // register filesystem commands
-  registerCommand(context, 'initExampleFiles', () => {
+  registerCommand(context, `${FS_SCHEME}.initExampleFiles`, () => {
     if (initialized) {
       return;
     }
@@ -129,10 +131,16 @@ export function registerFileSystem(context: vscode.ExtensionContext) {
     );
   });
 
-  registerCommand(context, 'reset', () => {
+  registerCommand(context, `${FS_SCHEME}.reset`, () => {
     for (const [name] of memFs.readDirectory(vscode.Uri.parse('memfs:/'))) {
       memFs.delete(vscode.Uri.parse(`memfs:/${name}`));
     }
     initialized = false;
+  });
+
+  registerCommand(context, `${FS_SCHEME}.exportWorkspace`, () => {
+    memFs.exportToZip().then(content => {
+      exportFile(content, 'memfs.zip');
+    });
   });
 }

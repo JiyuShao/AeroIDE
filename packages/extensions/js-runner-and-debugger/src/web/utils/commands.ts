@@ -1,11 +1,10 @@
 import vscode from 'vscode';
-import { EXTENSION_NAME, FS_SCHEME } from '../config';
+import { EXTENSION_NAME } from '../config';
 
 type Commands = {
   [key: string]: () => void;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CommandCallback = (...args: any[]) => any;
 
 // The command has been defined in the package.json file
@@ -28,12 +27,12 @@ export function registerCommand(
   };
   commands[command] = newCallback;
   const disposable = vscode.commands.registerCommand(
-    `${EXTENSION_NAME}.${FS_SCHEME}.${command}`,
+    `${EXTENSION_NAME}.${command}`,
     newCallback
   );
   context.subscriptions.push(disposable);
 }
 
 export function executeCommand(command: string) {
-  vscode.commands.executeCommand(`${EXTENSION_NAME}.${FS_SCHEME}.${command}`);
+  vscode.commands.executeCommand(`${EXTENSION_NAME}.${command}`);
 }

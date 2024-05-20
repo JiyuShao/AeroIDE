@@ -1,5 +1,3 @@
-// eslint-disable @typescript-eslint/no-explicit-any
-
 import { EXTENSION_NAME_SHORT } from '../config';
 
 function generateShortId(): string {

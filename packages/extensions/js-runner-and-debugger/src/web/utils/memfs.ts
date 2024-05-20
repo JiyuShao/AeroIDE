@@ -6,6 +6,9 @@
 
 import * as path from './paths';
 import * as vscode from 'vscode';
+import JSZip from 'jszip';
+import { logger } from './logger';
+import { blobToUint8Array } from './file';
 
 export class File implements vscode.FileStat {
   type: vscode.FileType;
@@ -235,4 +238,64 @@ export class MemFS implements vscode.FileSystemProvider {
       this._bufferedEvents.length = 0;
     }, 5);
   }
+
+  // Custom Method
+  public async exportToZip(): Promise<Uint8Array> {
+    const zip = new JSZip();
+    const stack: {
+      value: Directory | File;
+      path: string;
+      parentZip: JSZip;
+    }[] = [
+      {
+        value: this.root,
+        path: '',
+        parentZip: zip,
+      },
+    ];
+    // preorder DFS
+    while (stack.length > 0) {
+      const currentItem = stack.pop()!;
+      console.log(`Creating ${currentItem.path}:`, currentItem.value);
+      if (currentItem.value instanceof Directory) {
+        // create zip folder
+        const currentZip =
+          currentItem.path === ''
+            ? currentItem.parentZip // root
+            : currentItem.parentZip.folder(currentItem.value.name)!;
+        currentItem.value.entries.forEach((value, key) => {
+          stack.push({
+            value,
+            path: `${currentItem.path}/${key}`,
+            parentZip: currentZip,
+          });
+        });
+      } else if (currentItem.value instanceof File) {
+        if (!currentItem.value.data) {
+          logger.error(`Creating ${currentItem.path} Failed: File is Empty!`);
+          continue;
+        }
+        currentItem.parentZip.file(
+          currentItem.value.name,
+          currentItem.value.data
+        );
+      }
+      logger.debug(`Creating ${currentItem.path} Succeed!`);
+    }
+    return zip
+      .generateAsync({ type: 'blob' })
+      .then(function (content) {
+        return blobToUint8Array(content);
+      })
+      .then(function (content) {
+        logger.info(`Export to zip Succeed:`, content);
+        return content;
+      })
+      .catch(error => {
+        logger.error(`Export to zip Failed!`, error);
+        throw error;
+      });
+  }
+
+  public importFromZip() {}
 }
