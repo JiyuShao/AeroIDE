@@ -29,6 +29,10 @@
         "title": "JS Runner & Debugger: MemFS Reset"
       },
       {
+        "command": "js-runner-and-debugger.memfs.importWorkspace",
+        "title": "JS Runner & Debugger: MemFS Import Workspace"
+      },
+      {
         "command": "js-runner-and-debugger.memfs.exportWorkspace",
         "title": "JS Runner & Debugger: MemFS Export Workspace"
       }

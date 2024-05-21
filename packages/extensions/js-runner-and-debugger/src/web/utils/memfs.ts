@@ -8,7 +8,8 @@ import * as path from './paths';
 import * as vscode from 'vscode';
 import JSZip from 'jszip';
 import { logger } from './logger';
-import { blobToUint8Array } from './file';
+import { blobToUint8Array, uint8ArraytoBlob } from './file';
+import { FS_SCHEME } from '../config';
 
 export class File implements vscode.FileStat {
   type: vscode.FileType;
@@ -297,5 +298,27 @@ export class MemFS implements vscode.FileSystemProvider {
       });
   }
 
-  public importFromZip() {}
+  public async importFromZip(content: Uint8Array) {
+    await JSZip.loadAsync(uint8ArraytoBlob(content)).then(zip => {
+      console.log(zip);
+      Object.values(zip.files).forEach(currentFileMeta => {
+        if (currentFileMeta.dir) {
+          this.createDirectory(
+            vscode.Uri.parse(`${FS_SCHEME}:/${currentFileMeta.name}`)
+          );
+        } else {
+          zip
+            .file(currentFileMeta.name)
+            ?.async('uint8array')
+            .then(fileContent => {
+              this.writeFile(
+                vscode.Uri.parse(`${FS_SCHEME}:/${currentFileMeta.name}`),
+                fileContent,
+                { create: true, overwrite: true }
+              );
+            });
+        }
+      });
+    });
+  }
 }

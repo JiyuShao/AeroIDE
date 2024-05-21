@@ -1,37 +1,54 @@
 import vscode from 'vscode';
 
-export async function exportFile(data: Uint8Array, defaultFilename: string) {
+export async function importFile(): Promise<Uint8Array | void> {
   try {
-    // 询问用户保存文件的位置
-    const uri = await vscode.window.showSaveDialog({
-      saveLabel: '保存文件',
+    // 从网络中实现
+    const uris = await vscode.window.showOpenDialog({
+      canSelectMany: false,
+      canSelectFiles: true,
+      canSelectFolders: false,
+      openLabel: 'Select File',
       filters: {
-        'All files': ['*'],
+        'ZIP File': ['zip'],
       },
-      defaultUri: vscode.Uri.file(defaultFilename),
+      defaultUri: vscode.Uri.file('/'),
     });
 
-    if (!uri) {
-      // 如果用户取消了操作，直接返回
+    if (!uris || uris.length === 0) {
       return;
     }
-
-    // 写入文件系统
-    await vscode.workspace.fs.writeFile(uri, data);
-
-    // 提醒用户文件已下载
-    vscode.window.showInformationMessage(`文件已保存到：${uri.fsPath}`);
+    return vscode.workspace.fs.readFile(uris[0]);
   } catch (error) {
-    vscode.window.showErrorMessage(`保存文件失败: ${error}`);
+    vscode.window.showErrorMessage(`File import failed: ${error}`);
   }
 }
 
-export async function blobToUint8Array(blob: Blob) {
-  // 使用 Blob 的 arrayBuffer 方法获取 ArrayBuffer
-  const arrayBuffer = await blob.arrayBuffer();
+export async function exportFile(
+  data: Uint8Array,
+  defaultFilename: string
+): Promise<string | void> {
+  // Ask where to save
+  const uri = await vscode.window.showSaveDialog({
+    saveLabel: 'Save File',
+    filters: {
+      'ZIP File': ['zip'],
+    },
+    defaultUri: vscode.Uri.file(defaultFilename),
+  });
+  if (!uri) {
+    return;
+  }
+  await vscode.workspace.fs.writeFile(uri, data);
+  return uri.fsPath;
+}
 
-  // 使用 ArrayBuffer 创建 Uint8Array
+export async function blobToUint8Array(blob: Blob): Promise<Uint8Array> {
+  const arrayBuffer = await blob.arrayBuffer();
   const uint8Array = new Uint8Array(arrayBuffer);
 
   return uint8Array;
+}
+
+export async function uint8ArraytoBlob(content: Uint8Array): Promise<Blob> {
+  return new Blob([content]);
 }
