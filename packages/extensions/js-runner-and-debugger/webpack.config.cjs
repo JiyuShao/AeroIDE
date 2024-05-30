@@ -22,7 +22,7 @@ const webExtensionConfig = {
     'test/suite/index': './src/web/test/suite/index.ts',
   },
   output: {
-    filename: '[name].js',
+    filename: '[name].cjs',
     path: path.join(__dirname, './dist/web'),
     libraryTarget: 'commonjs',
     devtoolModuleFilenameTemplate: '../../[resource-path]',

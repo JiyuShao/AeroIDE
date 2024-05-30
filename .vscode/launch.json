@@ -6,17 +6,32 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Run Extension: JS Runner and Debugger",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        // "--profile-temp",
+        "--profile=VS Code Extension Debug",
+        "--extensionDevelopmentPath=${workspaceFolder}/packages/extensions/js-runner-and-debugger"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/web/**/*.cjs"
+      ],
+      "preLaunchTask": "compile-web:packages/extensions/js-runner-and-debugger"
+    },
+    {
       "name": "Run Web Extension: JS Runner and Debugger",
       "type": "extensionHost",
       "debugWebWorkerHost": true,
       "request": "launch",
       "args": [
-        "--profile-temp",
+        // "--profile-temp",
+        "--profile=VS Code Extension Debug",
         "--extensionDevelopmentPath=${workspaceFolder}/packages/extensions/js-runner-and-debugger",
         "--extensionDevelopmentKind=web"
       ],
       "outFiles": [
-        "${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/web/**/*.js"
+        "${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/web/**/*.cjs"
       ],
       "preLaunchTask": "compile-web:packages/extensions/js-runner-and-debugger"
     },
@@ -31,7 +46,7 @@
         "--extensionTestsPath=${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/web/test/suite/index"
       ],
       "outFiles": [
-        "${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/web/**/*.js"
+        "${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/web/**/*.cjs"
       ],
       "preLaunchTask": "watch-web:packages/extensions/js-runner-and-debugger"
     }

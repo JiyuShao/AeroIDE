@@ -13,7 +13,12 @@
   "activationEvents": [
     "onStartupFinished"
   ],
-  "browser": "./dist/web/extension.js",
+  "main": "./dist/web/extension.cjs",
+  "browser": "./dist/web/extension.cjs",
+  "preview": true,
+  "extensionDependencies": [
+    "ms-vscode.wasm-wasi-core"
+  ],
   "contributes": {
     "commands": [
       {
@@ -35,6 +40,10 @@
       {
         "command": "js-runner-and-debugger.memfs.exportWorkspace",
         "title": "JS Runner & Debugger: MemFS Export Workspace"
+      },
+      {
+        "command": "js-runner-and-debugger.runner.test",
+        "title": "JS Runner & Debugger: JS Runner Test"
       }
     ]
   },
@@ -59,7 +68,9 @@
     "@typescript-eslint/eslint-plugin": "^7.7.1",
     "@typescript-eslint/parser": "^7.7.1",
     "@vscode/test-web": "^0.0.54",
+    "@vscode/wasm-wasi": "0.13.0-pre.1",
     "assert": "^2.1.0",
+    "esbuild-wasm": "^0.21.3",
     "jszip": "^3.10.1",
     "mocha": "^10.4.0",
     "process": "^0.11.10",
