@@ -1,31 +1,22 @@
 import vscode from 'vscode';
-import { Wasm } from '@vscode/wasm-wasi';
 import { registerCommand } from '../utils/commands';
-// import { test } from '../utils/esbuild';
+import { requirePseudoTerminal, requireWasiEnv } from '../utils/wasi';
 
 export async function registerJSRunner(context: vscode.ExtensionContext) {
-  const wasm: Wasm = await Wasm.load();
   registerCommand(context, 'runner.test', async () => {
-    // Create a pseudoterminal to provide stdio to the WASM process.
-    const pty = wasm.createPseudoterminal();
-    const terminal = vscode.window.createTerminal({
-      name: 'Run C Example',
-      pty,
-      isTransient: true,
-    });
-    terminal.show(true);
-
     try {
-      // Load the WASM module. It is stored alongside the extension's JS code.
-      // So we can use VS Code's file system API to load it. Makes it
-      // independent of whether the code runs in the desktop or the web.
-      const bits = await vscode.workspace.fs.readFile(
-        vscode.Uri.joinPath(context.extensionUri, 'src/web/hello.wasm')
+      // Load the WASM module.
+      const { wasm, fs, module } = await requireWasiEnv(
+        context,
+        'src/web/wasi_example_main.wasm'
       );
-      const module = await WebAssembly.compile(bits);
+      // Create a pseudoterminal to provide stdio to the WASM process.
+      const pty = requirePseudoTerminal(wasm, 'Run JS Compiler');
       // Create a WASM process.
-      const process = await wasm.createProcess('hello', module, {
+      const process = await wasm.createProcess('run-js-compiler', module, {
+        rootFileSystem: fs,
         stdio: pty.stdio,
+        args: ['arg1', 'arg2'],
       });
       // Run the process and wait for its result.
       const result = await process.run();
