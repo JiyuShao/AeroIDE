@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { logger } from './utils/logger';
 import { LOGGER_LEVEL } from './config';
 import { registerFileSystem } from './services/file-system';
+import { registerWasi } from './services/wasi';
 import { registerJSRunner } from './services/js-runner';
 import { registerHelloWorld } from './services/hello-world';
 
@@ -19,6 +20,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   registerFileSystem(context);
+  registerWasi(context);
   registerJSRunner(context);
   registerHelloWorld(context);
 }

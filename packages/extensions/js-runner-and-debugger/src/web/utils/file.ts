@@ -52,3 +52,21 @@ export async function blobToUint8Array(blob: Blob): Promise<Uint8Array> {
 export async function uint8ArraytoBlob(content: Uint8Array): Promise<Blob> {
   return new Blob([content]);
 }
+
+export async function fileExists(uri: vscode.Uri): Promise<boolean> {
+  try {
+    return (await vscode.workspace.fs.stat(uri)).type === vscode.FileType.File;
+  } catch (err) {
+    return false;
+  }
+}
+
+export async function dirExists(uri: vscode.Uri): Promise<boolean> {
+  try {
+    return (
+      (await vscode.workspace.fs.stat(uri)).type === vscode.FileType.Directory
+    );
+  } catch (err) {
+    return false;
+  }
+}

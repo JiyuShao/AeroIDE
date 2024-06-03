@@ -42,8 +42,12 @@
         "title": "JS Runner & Debugger: MemFS Export Workspace"
       },
       {
+        "command": "js-runner-and-debugger.wasi.coreutils",
+        "title": "JS Runner & Debugger: Run WASI Coreutils Command"
+      },
+      {
         "command": "js-runner-and-debugger.runner.test",
-        "title": "JS Runner & Debugger: JS Runner Test"
+        "title": "JS Runner & Debugger: Run Test"
       }
     ]
   },
