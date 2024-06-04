@@ -257,7 +257,7 @@ export class MemFS implements vscode.FileSystemProvider {
     // preorder DFS
     while (stack.length > 0) {
       const currentItem = stack.pop()!;
-      console.log(`Creating ${currentItem.path}:`, currentItem.value);
+      logger.debug(`Creating ${currentItem.path}:`, currentItem.value);
       if (currentItem.value instanceof Directory) {
         // create zip folder
         const currentZip =
@@ -300,7 +300,6 @@ export class MemFS implements vscode.FileSystemProvider {
 
   public async importFromZip(content: Uint8Array) {
     await JSZip.loadAsync(uint8ArraytoBlob(content)).then(zip => {
-      console.log(zip);
       Object.values(zip.files).forEach(currentFileMeta => {
         if (currentFileMeta.dir) {
           this.createDirectory(

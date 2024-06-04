@@ -23,7 +23,7 @@ export function registerFileSystem(context: vscode.ExtensionContext) {
       workspaceFolders.some(folder => folder.uri.scheme === FS_SCHEME);
 
     if (found) {
-      vscode.window.showInformationMessage('Workspace is already initialized!');
+      // vscode.window.showInformationMessage('Workspace is already initialized!');
       return;
     }
 

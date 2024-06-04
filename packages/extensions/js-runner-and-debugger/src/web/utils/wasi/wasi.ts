@@ -31,20 +31,25 @@ export interface WasiTerminal {
   pty: WasmPseudoterminal;
   terminal: vscode.Terminal;
 }
-const wasiTerminalMap: Record<string, WasiTerminal> = {};
-export function requirePseudoTerminal(wasm: Wasm, name: string): WasiTerminal {
-  if (!wasiTerminalMap[name]) {
+let wasiTerminalMap: WasiTerminal | undefined = undefined;
+export function requirePseudoTerminal(wasm: Wasm, _name: string): WasiTerminal {
+  if (!wasiTerminalMap) {
     const pty = wasm.createPseudoterminal();
     const terminal = vscode.window.createTerminal({
-      name,
+      name: 'wasm-wasi',
       pty,
       isTransient: true,
     });
     terminal.show(true);
-    wasiTerminalMap[name] = {
+    wasiTerminalMap = {
       pty,
       terminal,
     };
   }
-  return wasiTerminalMap[name];
+  return wasiTerminalMap;
+}
+
+export interface RunWasiCommandOptions {
+  prerun?: (wasiEnv: WasiEnv, wasiTerminal: WasiTerminal) => void;
+  postrun?: (wasiEnv: WasiEnv, wasiTerminal: WasiTerminal) => void;
 }

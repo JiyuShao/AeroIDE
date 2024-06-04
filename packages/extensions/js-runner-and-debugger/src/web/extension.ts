@@ -2,7 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { logger } from './utils/logger';
-import { LOGGER_LEVEL } from './config';
+import { LOGGER_LEVEL, setExtensionStatus } from './config';
 import { registerFileSystem } from './services/file-system';
 import { registerWasi } from './services/wasi';
 import { registerJSRunner } from './services/js-runner';
@@ -18,7 +18,25 @@ export function activate(context: vscode.ExtensionContext) {
   logger.debug(
     'Congratulations, your extension is now active in the web extension host!'
   );
-
+  const checkWorkspaceFolders = () => {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (workspaceFolders && workspaceFolders.length === 1) {
+      setExtensionStatus(true);
+      return;
+    }
+    const errMsg =
+      'Oops, Your extension can only be used in a single-root workspace.';
+    if (workspaceFolders && workspaceFolders.length > 1) {
+      vscode.window.showErrorMessage(errMsg);
+    }
+    setExtensionStatus(false, errMsg);
+    logger.error(errMsg);
+  };
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeWorkspaceFolders(() => {
+      checkWorkspaceFolders();
+    })
+  );
   registerFileSystem(context);
   registerWasi(context);
   registerJSRunner(context);
