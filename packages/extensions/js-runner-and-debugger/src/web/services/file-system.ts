@@ -77,6 +77,11 @@ export function registerFileSystem(context: vscode.ExtensionContext) {
       { create: true, overwrite: true }
     );
     memFs.writeFile(
+      vscode.Uri.parse(`${FS_SCHEME}:/index.ts`),
+      new TextEncoder().encode('console.log("TypeScript")'),
+      { create: true, overwrite: true }
+    );
+    memFs.writeFile(
       vscode.Uri.parse(`${FS_SCHEME}:/file.css`),
       new TextEncoder().encode('* { color: green; }'),
       { create: true, overwrite: true }

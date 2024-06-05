@@ -1,27 +1,19 @@
 import vscode from 'vscode';
 import { registerCommand } from '../utils/commands';
-import { coreutils } from '../utils/wasi/coreutils';
-import { esbuild } from '../utils/wasi/esbuild';
+import { runWasiCommand } from '../utils/wasi';
 
 export async function registerWasi(context: vscode.ExtensionContext) {
   registerCommand(context, 'wasi.command', async () => {
     try {
       const command = await vscode.window.showInputBox({
-        value: '-h',
-        valueSelection: [0, 2],
+        value: 'help',
+        valueSelection: [0, 4],
         prompt: 'Please input command.',
       });
 
-      const args = command ? command.split(' ') : [];
-      if (args.length === 0) {
-        throw new Error('Please input wasi command');
-      }
+      const commandArr = command ? command.trim().split(' ') : [];
       vscode.workspace.saveAll(false);
-      if (args[0] === 'esbuild') {
-        await esbuild(context, args.slice(1));
-      } else {
-        await coreutils(context, args);
-      }
+      await runWasiCommand(context, commandArr);
     } catch (error) {
       vscode.window.showErrorMessage((error as Error).message);
     }

@@ -1,7 +1,7 @@
 import vscode from 'vscode';
 import { registerCommand } from '../utils/commands';
 import { FS_SCHEME } from '../config';
-import { esbuild, toWasm } from '../utils/wasi/esbuild';
+import { runWasiCommand, toWasm } from '../utils/wasi';
 import { fileExists } from '../utils/file';
 
 export async function registerJSRunner(context: vscode.ExtensionContext) {
@@ -22,15 +22,16 @@ export async function registerJSRunner(context: vscode.ExtensionContext) {
       }
       if (!wasmOutFile) {
         throw new Error(
-          `Map VS Code URI to WASM FS Failed: ${FS_SCHEME}:/file.ts`
+          `Map VS Code URI to WASM FS Failed: ${FS_SCHEME}:/out.js`
         );
       }
 
-      await esbuild(context, [
+      await runWasiCommand(context, [
+        'esbuild',
         wasmEntryFile,
         `--outfile=${wasmOutFile}`,
         '--bundle',
-        // '--loader=ts',
+        '--loader:.ts=ts',
         '--format=esm',
       ]);
     } catch (error) {
