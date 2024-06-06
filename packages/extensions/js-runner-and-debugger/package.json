@@ -26,7 +26,7 @@
         "title": "JS Runner & Debugger: Hello World"
       },
       {
-        "command": "js-runner-and-debugger.memfs.initDemoWorkspace",
+        "command": "js-runner-and-debugger.memfs.importDemoWorkspace",
         "title": "JS Runner & Debugger: MemFS Init Demo Workspace"
       },
       {

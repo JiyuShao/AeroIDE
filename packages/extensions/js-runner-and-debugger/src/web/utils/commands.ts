@@ -26,6 +26,7 @@ export function registerCommand(
       vscode.window.showErrorMessage(
         `Run ${command} failed: ${(error as Error).message}`
       );
+      throw new Error(`Run ${command} failed: ${(error as Error).message}`);
     }
   };
   commands[command] = newCallback;
@@ -36,6 +37,12 @@ export function registerCommand(
   context.subscriptions.push(disposable);
 }
 
-export function executeCommand(command: string) {
-  vscode.commands.executeCommand(`${EXTENSION_NAME}.${command}`);
+export function executeCommand(
+  command: string,
+  ...rest: any[]
+): Thenable<unknown> {
+  return vscode.commands.executeCommand(
+    `${EXTENSION_NAME}.${command}`,
+    ...rest
+  );
 }
