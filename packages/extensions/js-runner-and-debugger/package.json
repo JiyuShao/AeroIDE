@@ -11,7 +11,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onFileSystem:memfs"
   ],
   "main": "./dist/web/extension.cjs",
   "browser": "./dist/web/extension.cjs",
@@ -26,8 +26,8 @@
         "title": "JS Runner & Debugger: Hello World"
       },
       {
-        "command": "js-runner-and-debugger.memfs.initExampleFiles",
-        "title": "JS Runner & Debugger: MemFS Init"
+        "command": "js-runner-and-debugger.memfs.initDemoWorkspace",
+        "title": "JS Runner & Debugger: MemFS Init Demo Workspace"
       },
       {
         "command": "js-runner-and-debugger.memfs.reset",

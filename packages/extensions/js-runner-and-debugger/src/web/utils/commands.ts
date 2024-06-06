@@ -1,5 +1,5 @@
 import vscode from 'vscode';
-import { EXTENSION_NAME, getExtentionStatus } from '../config';
+import { EXTENSION_NAME } from '../config';
 import { logger } from './logger';
 
 type Commands = {
@@ -20,10 +20,6 @@ export function registerCommand(
 ) {
   const newCallback: CommandCallback = (...args) => {
     try {
-      const extentionStatus = getExtentionStatus();
-      if (!extentionStatus.isEnabled) {
-        throw new Error(extentionStatus.errMsg);
-      }
       return callback(...args);
     } catch (error) {
       logger.error(`Run ${command} failed: `, error);
