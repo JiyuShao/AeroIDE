@@ -1,6 +1,6 @@
 import vscode from 'vscode';
 
-export async function importFile(): Promise<Uint8Array | void> {
+export async function importFile(): Promise<vscode.Uri | void> {
   const uris = await vscode.window.showOpenDialog({
     canSelectMany: false,
     canSelectFiles: true,
@@ -15,7 +15,7 @@ export async function importFile(): Promise<Uint8Array | void> {
   if (!uris || uris.length === 0) {
     return;
   }
-  return vscode.workspace.fs.readFile(uris[0]);
+  return uris[0];
 }
 
 export async function exportFile(

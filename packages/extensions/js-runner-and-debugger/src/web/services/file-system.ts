@@ -2,10 +2,17 @@ import * as vscode from 'vscode';
 import { MemFS } from '../utils/memfs';
 import { executeCommand, registerCommand } from '../utils/commands';
 import { FS_SCHEME } from '../config';
-import { importFile, exportFile } from '../utils/file';
+import { importFile } from '../utils/file';
 
 export async function registerFileSystem(context: vscode.ExtensionContext) {
-  const memFs = new MemFS();
+  // init memFs
+  const workspaceFolders = vscode.workspace.workspaceFolders || [];
+  const matchedFolder = workspaceFolders.find(
+    folder => folder.uri.scheme === FS_SCHEME
+  );
+  const memFs = new MemFS(
+    matchedFolder ? matchedFolder.uri : vscode.Uri.parse(`${FS_SCHEME}:/`)
+  );
 
   // register a file system provider
   context.subscriptions.push(
@@ -15,19 +22,15 @@ export async function registerFileSystem(context: vscode.ExtensionContext) {
   );
 
   registerCommand(context, `${FS_SCHEME}.importDemoWorkspace`, async () => {
-    const folderUri = vscode.Uri.parse(`${FS_SCHEME}:/`);
     await executeCommand(`${FS_SCHEME}.importWorkspace`, {
-      isDemo: true,
-    });
-    await vscode.commands.executeCommand('vscode.openFolder', folderUri, {
-      forceReuseWindow: true,
+      uri: vscode.Uri.joinPath(context.extensionUri, 'assets/demo.zip'),
     });
   });
 
   registerCommand(
     context,
     `${FS_SCHEME}.importWorkspace`,
-    async (options?: { isDemo: boolean }) => {
+    async (options?: { uri: vscode.Uri }) => {
       // 展示信息消息框，含有Yes和No选项
       const userChoice = await vscode.window.showInformationMessage(
         'Importing the workspace will delete all data in the current workspace, continue?',
@@ -37,29 +40,26 @@ export async function registerFileSystem(context: vscode.ExtensionContext) {
       if (userChoice !== 'Yes') {
         return;
       }
-      const { isDemo = false } = options || {};
-      let zipFileContent: Uint8Array | void = undefined;
-      if (!isDemo) {
-        zipFileContent = await importFile();
-      } else {
-        zipFileContent = await vscode.workspace.fs.readFile(
-          vscode.Uri.joinPath(context.extensionUri, 'assets/demo.zip')
-        );
+      const { uri } = options || {};
+      const finalUri: vscode.Uri | void = uri || (await importFile());
+      if (!finalUri) {
+        return;
       }
-      if (zipFileContent) {
-        // reset workspace before run import logic
-        await memFs.reset();
-        await memFs.importFromZip(zipFileContent);
+      // reset workspace before run import logic
+      await memFs.reset();
+      // import and folder to memfs(persistence)
+      const newUri = await memFs.importFromZip(finalUri);
+      if (newUri) {
+        // open single-folder workspace
+        await vscode.commands.executeCommand('vscode.openFolder', newUri, {
+          forceReuseWindow: true,
+        });
         vscode.window.showInformationMessage('File imported successfully');
       }
     }
   );
 
   registerCommand(context, `${FS_SCHEME}.exportWorkspace`, async () => {
-    const content = await memFs.exportToZip();
-    const path = await exportFile(content, 'memfs.zip');
-    if (path) {
-      vscode.window.showInformationMessage(`File saved successfully: ${path}`);
-    }
+    await memFs.exportToZip();
   });
 }

@@ -9,6 +9,8 @@ import * as vscode from 'vscode';
 import JSZip from 'jszip';
 import { logger } from './logger';
 import { FS_SCHEME } from '../config';
+import { IndexedDBWrapper } from './indexed-db';
+import { exportFile } from './file';
 
 export class File implements vscode.FileStat {
   type: vscode.FileType;
@@ -50,7 +52,13 @@ export class Directory implements vscode.FileStat {
 export type Entry = File | Directory;
 
 export class MemFS implements vscode.FileSystemProvider {
-  root = new Directory('/');
+  private root: Directory;
+  private dbWrapper: IndexedDBWrapper;
+
+  constructor(rootUri: vscode.Uri) {
+    this.root = new Directory(rootUri.path);
+    this.dbWrapper = new IndexedDBWrapper(FS_SCHEME, rootUri.path);
+  }
 
   // --- manage file metadata
 
@@ -240,14 +248,20 @@ export class MemFS implements vscode.FileSystemProvider {
   }
 
   // Custom Method
-  public async reset(uri: vscode.Uri = vscode.Uri.parse(`${FS_SCHEME}:/`)) {
+  public async init() {
+    return this.dbWrapper.open();
+  }
+
+  public async reset(
+    uri: vscode.Uri = vscode.Uri.parse(`${FS_SCHEME}:${this.root.name}`)
+  ) {
     for (const [name] of this.readDirectory(uri)) {
       this.delete(vscode.Uri.parse(`${FS_SCHEME}:/${name}`));
     }
   }
 
-  public async exportToZip(): Promise<Uint8Array> {
-    const zip = new JSZip();
+  public async exportToZip(): Promise<void> {
+    const rootZip = new JSZip();
     const stack: {
       value: Directory | File;
       path: string;
@@ -256,7 +270,7 @@ export class MemFS implements vscode.FileSystemProvider {
       {
         value: this.root,
         path: '',
-        parentZip: zip,
+        parentZip: rootZip,
       },
     ];
     // preorder DFS
@@ -288,37 +302,59 @@ export class MemFS implements vscode.FileSystemProvider {
       }
       logger.debug(`Creating ${currentItem.path} Succeed!`);
     }
-    return zip
-      .generateAsync({ type: 'uint8array' })
-      .then(function (content) {
-        logger.info(`Export to zip Succeed:`, content);
-        return content;
-      })
-      .catch(error => {
-        logger.error(`Export to zip Failed!`, error);
-        throw error;
-      });
+    try {
+      const content = await rootZip.generateAsync({ type: 'uint8array' });
+      const path = await exportFile(content, 'memfs.zip');
+      vscode.window.showInformationMessage(`File saved successfully: ${path}`);
+    } catch (error) {
+      const errMsg = `exportToZip failed:${(error as Error).message}`;
+      logger.info(errMsg);
+      throw new Error(errMsg);
+    }
   }
 
-  public async importFromZip(content: Uint8Array) {
-    const zipFileContent = await JSZip.loadAsync(content);
-    Object.values(zipFileContent.files).forEach(async currentFileMeta => {
-      if (currentFileMeta.dir) {
-        this.createDirectory(
-          vscode.Uri.parse(`${FS_SCHEME}:/${currentFileMeta.name}`)
-        );
-      } else {
-        const currentFileContent = await zipFileContent
-          .file(currentFileMeta.name)
-          ?.async('uint8array');
-        if (currentFileContent) {
-          this.writeFile(
-            vscode.Uri.parse(`${FS_SCHEME}:/${currentFileMeta.name}`),
-            currentFileContent,
-            { create: true, overwrite: true }
+  public async importFromZip(uri: vscode.Uri): Promise<vscode.Uri | void> {
+    const rawContent = await vscode.workspace.fs.readFile(uri);
+    if (!rawContent) {
+      return;
+    }
+    const rootZip = await JSZip.loadAsync(rawContent);
+    const stack: {
+      value: Directory | File;
+      path: string;
+      zip: JSZip;
+    }[] = [
+      {
+        value: this.root,
+        path: '',
+        zip: rootZip,
+      },
+    ];
+    while (stack.length > 0) {
+      const currentItem = stack.pop()!;
+      for (const currentFileMeta of Object.values(currentItem.zip.files)) {
+        if (currentFileMeta.dir) {
+          this.createDirectory(
+            vscode.Uri.parse(
+              `${FS_SCHEME}:${currentItem.path}/${currentFileMeta.name}`
+            )
           );
+        } else {
+          const currentFileContent = await currentItem.zip
+            .file(currentFileMeta.name)
+            ?.async('uint8array');
+          if (currentFileContent) {
+            this.writeFile(
+              vscode.Uri.parse(
+                `${FS_SCHEME}:${currentItem.path}${currentFileMeta.name}`
+              ),
+              currentFileContent,
+              { create: true, overwrite: true }
+            );
+          }
         }
       }
-    });
+    }
+    return vscode.Uri.parse(`${FS_SCHEME}:/`);
   }
 }
