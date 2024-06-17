@@ -9,7 +9,6 @@ import * as vscode from 'vscode';
 import JSZip from 'jszip';
 import { logger } from './logger';
 import { FS_SCHEME } from '../config';
-import { IndexedDBWrapper } from './indexed-db';
 import { exportFile } from './file';
 
 export class File implements vscode.FileStat {
@@ -53,11 +52,9 @@ export type Entry = File | Directory;
 
 export class MemFS implements vscode.FileSystemProvider {
   private root: Directory;
-  private dbWrapper: IndexedDBWrapper;
 
-  constructor(rootUri: vscode.Uri) {
-    this.root = new Directory(rootUri.path);
-    this.dbWrapper = new IndexedDBWrapper(FS_SCHEME, rootUri.path);
+  constructor() {
+    this.root = new Directory('/');
   }
 
   // --- manage file metadata
@@ -248,10 +245,6 @@ export class MemFS implements vscode.FileSystemProvider {
   }
 
   // Custom Method
-  public async init() {
-    return this.dbWrapper.open();
-  }
-
   public async reset(
     uri: vscode.Uri = vscode.Uri.parse(`${FS_SCHEME}:${this.root.name}`)
   ) {
@@ -313,7 +306,7 @@ export class MemFS implements vscode.FileSystemProvider {
     }
   }
 
-  public async importFromZip(uri: vscode.Uri): Promise<vscode.Uri | void> {
+  public async importFromZip(uri: vscode.Uri): Promise<void> {
     const rawContent = await vscode.workspace.fs.readFile(uri);
     if (!rawContent) {
       return;
@@ -355,6 +348,5 @@ export class MemFS implements vscode.FileSystemProvider {
         }
       }
     }
-    return vscode.Uri.parse(`${FS_SCHEME}:/`);
   }
 }

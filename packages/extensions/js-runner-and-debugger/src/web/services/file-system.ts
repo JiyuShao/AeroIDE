@@ -3,16 +3,11 @@ import { MemFS } from '../utils/memfs';
 import { executeCommand, registerCommand } from '../utils/commands';
 import { FS_SCHEME } from '../config';
 import { importFile } from '../utils/file';
+import { logger } from '../utils/logger';
 
 export async function registerFileSystem(context: vscode.ExtensionContext) {
   // init memFs
-  const workspaceFolders = vscode.workspace.workspaceFolders || [];
-  const matchedFolder = workspaceFolders.find(
-    folder => folder.uri.scheme === FS_SCHEME
-  );
-  const memFs = new MemFS(
-    matchedFolder ? matchedFolder.uri : vscode.Uri.parse(`${FS_SCHEME}:/`)
-  );
+  const memFs = new MemFS();
 
   // register a file system provider
   context.subscriptions.push(
@@ -20,6 +15,18 @@ export async function registerFileSystem(context: vscode.ExtensionContext) {
       isCaseSensitive: true,
     })
   );
+
+  // open memfs root folder
+  const workspaceFolders = vscode.workspace.workspaceFolders || [];
+  const validFlag =
+    workspaceFolders &&
+    workspaceFolders.length === 1 &&
+    workspaceFolders[0].uri.scheme === FS_SCHEME &&
+    workspaceFolders[0].uri.fsPath === '/';
+
+  if (!validFlag) {
+    logger.error(`Only allow single-folder ${FS_SCHEME} workspace`);
+  }
 
   registerCommand(context, `${FS_SCHEME}.importDemoWorkspace`, async () => {
     await executeCommand(`${FS_SCHEME}.importWorkspace`, {
@@ -48,14 +55,16 @@ export async function registerFileSystem(context: vscode.ExtensionContext) {
       // reset workspace before run import logic
       await memFs.reset();
       // import and folder to memfs(persistence)
-      const newUri = await memFs.importFromZip(finalUri);
-      if (newUri) {
-        // open single-folder workspace
-        await vscode.commands.executeCommand('vscode.openFolder', newUri, {
+      await memFs.importFromZip(finalUri);
+      // open single-folder workspace
+      await vscode.commands.executeCommand(
+        'vscode.openFolder',
+        vscode.Uri.parse(`${FS_SCHEME}:/`),
+        {
           forceReuseWindow: true,
-        });
-        vscode.window.showInformationMessage('File imported successfully');
-      }
+        }
+      );
+      vscode.window.showInformationMessage('File imported successfully');
     }
   );
 
