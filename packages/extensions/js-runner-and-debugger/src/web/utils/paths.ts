@@ -3,6 +3,14 @@ export function dirname(originalPath: string) {
   return path.substring(0, path.lastIndexOf('/')) || '/';
 }
 
+export function dirpath(originalPath: string) {
+  let path = dirname(originalPath);
+  if (!path.endsWith('/')) {
+    path += '/';
+  }
+  return path;
+}
+
 export function basename(originalPath: string) {
   const path = removeTrailingSlash(originalPath);
   const lastSlashIndex = path.lastIndexOf('/');

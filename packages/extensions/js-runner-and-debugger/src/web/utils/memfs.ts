@@ -10,60 +10,150 @@ import JSZip from 'jszip';
 import { logger } from './logger';
 import { FS_SCHEME } from '../config';
 import { exportFile } from './file';
+import { IStorage, Storage } from './storage';
+import { AutoInitClass, autoInit } from './decorator/auto-init-class';
 
-export class File implements vscode.FileStat {
+abstract class BaseFile implements vscode.FileStat {
   type: vscode.FileType;
   ctime: number;
   mtime: number;
   size: number;
 
   name: string;
-  data?: Uint8Array;
+  data?: Uint8Array; // only file has data
 
-  constructor(name: string) {
-    this.type = vscode.FileType.File;
+  constructor(name: string, type: vscode.FileType) {
     this.ctime = Date.now();
     this.mtime = Date.now();
     this.size = 0;
     this.name = name;
+    this.type = type;
+  }
+
+  toUnit8Array() {
+    const metadata = {
+      type: this.type,
+      ctime: this.ctime,
+      mtime: this.mtime,
+      size: this.size,
+      name: this.name,
+    };
+    const metadataString = JSON.stringify(metadata);
+    const metadataBytes = new TextEncoder().encode(metadataString);
+
+    if (this.data) {
+      const combined = new Uint8Array(
+        metadataBytes.length + this.data.length + 1
+      );
+      combined.set(new Uint8Array([metadataBytes.length]), 0); // Store the length of metadata as first byte.
+      combined.set(metadataBytes, 1);
+      combined.set(this.data, metadataBytes.length + 1);
+      return combined;
+    } else {
+      const combined = new Uint8Array(metadataBytes.length + 1);
+      combined.set(new Uint8Array([metadataBytes.length]), 0); // Store the length of metadata as first byte.
+      combined.set(metadataBytes, 1);
+      return combined;
+    }
+  }
+
+  static fromUnit8Array(bytes: Uint8Array): File | Directory {
+    const metadataLength = bytes[0];
+    const metadataBytes = bytes.slice(1, metadataLength + 1);
+    const data = bytes.slice(metadataLength + 1);
+
+    const metadataString = new TextDecoder().decode(metadataBytes);
+    const metadata = JSON.parse(metadataString);
+    let result: File | Directory | null = null;
+    if (metadata.type === vscode.FileType.File) {
+      result = new File(metadata.name);
+      result.data = data;
+    } else if (metadata.type === vscode.FileType.Directory) {
+      result = new Directory(metadata.name);
+    } else {
+      throw new Error(`Invalid File Metadata: ${metadataString}`);
+    }
+
+    result.ctime = metadata.ctime;
+    result.mtime = metadata.mtime;
+    result.size = metadata.size;
+    return result;
   }
 }
 
-export class Directory implements vscode.FileStat {
-  type: vscode.FileType;
-  ctime: number;
-  mtime: number;
-  size: number;
+export class File extends BaseFile {
+  constructor(name: string) {
+    super(name, vscode.FileType.File);
+  }
+}
 
-  name: string;
-  entries: Map<string, File | Directory>;
+export class Directory extends BaseFile {
+  entries: Map<string, File | Directory> = new Map();
 
   constructor(name: string) {
-    this.type = vscode.FileType.Directory;
-    this.ctime = Date.now();
-    this.mtime = Date.now();
-    this.size = 0;
-    this.name = name;
-    this.entries = new Map();
+    super(name, vscode.FileType.Directory);
   }
 }
 
 export type Entry = File | Directory;
 
-export class MemFS implements vscode.FileSystemProvider {
-  private root: Directory;
+export class MemFS extends AutoInitClass implements vscode.FileSystemProvider {
+  private _root: Directory;
+  private _storage: IStorage;
 
-  constructor() {
-    this.root = new Directory('/');
+  constructor(context: vscode.ExtensionContext) {
+    super();
+    this._root = new Directory('/');
+    this._storage = new Storage(context);
   }
+
+  protected _init = async () => {
+    // load from storage
+    const keys = (await this._storage.getAllKeys()).sort(
+      (a, b) => a.length - b.length
+    );
+    if (keys.length === 0) {
+      await this._storage.put(
+        this._convertUriToFileKey(vscode.Uri.parse(`${FS_SCHEME}:/`)),
+        this._root.toUnit8Array()
+      );
+      return;
+    }
+    const fileMap: Record<string, Directory> = {
+      '/': this._root,
+    };
+
+    for (const key of keys) {
+      const rawData = await this._storage.get(key);
+      const uri = this._convertFileKeyToUri(key);
+      const baseFile = BaseFile.fromUnit8Array(rawData);
+      if (baseFile instanceof Directory && !fileMap[uri.path]) {
+        fileMap[path.dirpath(uri.path)].entries.set(
+          path.basename(uri.path),
+          baseFile
+        );
+        fileMap[uri.path] = baseFile;
+      } else if (baseFile instanceof File) {
+        const currentFolder = fileMap[path.dirpath(uri.path)];
+        if (!currentFolder) {
+          throw new Error(
+            `Load from storage failed: ${path.dirpath(uri.path)} not found`
+          );
+        }
+        currentFolder.entries.set(path.basename(uri.path), baseFile);
+      }
+    }
+  };
 
   // --- manage file metadata
 
-  stat(uri: vscode.Uri): vscode.FileStat {
+  @autoInit
+  async stat(uri: vscode.Uri): Promise<vscode.FileStat> {
     return this._lookup(uri, false);
   }
 
-  readDirectory(uri: vscode.Uri): [string, vscode.FileType][] {
+  @autoInit
+  async readDirectory(uri: vscode.Uri): Promise<[string, vscode.FileType][]> {
     const entry = this._lookupAsDirectory(uri, false);
     const result: [string, vscode.FileType][] = [];
     for (const [name, child] of entry.entries) {
@@ -74,7 +164,8 @@ export class MemFS implements vscode.FileSystemProvider {
 
   // --- manage file contents
 
-  readFile(uri: vscode.Uri): Uint8Array {
+  @autoInit
+  async readFile(uri: vscode.Uri): Promise<Uint8Array> {
     const data = this._lookupAsFile(uri, false).data;
     if (data) {
       return data;
@@ -82,11 +173,12 @@ export class MemFS implements vscode.FileSystemProvider {
     throw vscode.FileSystemError.FileNotFound();
   }
 
-  writeFile(
+  @autoInit
+  async writeFile(
     uri: vscode.Uri,
     content: Uint8Array,
     options: { create: boolean; overwrite: boolean }
-  ): void {
+  ): Promise<void> {
     const basename = path.basename(uri.path);
     const parent = this._lookupParentDirectory(uri);
     let entry = parent.entries.get(basename);
@@ -108,16 +200,22 @@ export class MemFS implements vscode.FileSystemProvider {
     entry.size = content.byteLength;
     entry.data = content;
 
+    // async write file storage
+    await this._storage.put(
+      this._convertUriToFileKey(uri),
+      entry.toUnit8Array()
+    );
     this._fireSoon({ type: vscode.FileChangeType.Changed, uri });
   }
 
   // --- manage files/folders
 
-  rename(
+  @autoInit
+  async rename(
     oldUri: vscode.Uri,
     newUri: vscode.Uri,
     options: { overwrite: boolean }
-  ): void {
+  ): Promise<void> {
     if (!options.overwrite && this._lookup(newUri, true)) {
       throw vscode.FileSystemError.FileExists(newUri);
     }
@@ -132,39 +230,62 @@ export class MemFS implements vscode.FileSystemProvider {
     entry.name = newName;
     newParent.entries.set(newName, entry);
 
+    // async rename storage
+    const oldStorageItem = await this._storage.get(
+      this._convertUriToFileKey(oldUri)
+    );
+    await this._storage.put(this._convertUriToFileKey(newUri), oldStorageItem);
+    await this._storage.delete(this._convertUriToFileKey(oldUri));
+
     this._fireSoon(
       { type: vscode.FileChangeType.Deleted, uri: oldUri },
       { type: vscode.FileChangeType.Created, uri: newUri }
     );
   }
 
-  delete(uri: vscode.Uri): void {
-    const dirname = uri.with({ path: path.dirname(uri.path) });
+  @autoInit
+  async delete(uri: vscode.Uri): Promise<void> {
+    const dirUri = vscode.Uri.parse(`${FS_SCHEME}:${path.dirpath(uri.path)}`);
     const basename = path.basename(uri.path);
-    const parent = this._lookupAsDirectory(dirname, false);
+    const parent = this._lookupAsDirectory(dirUri, false);
     if (!parent.entries.has(basename)) {
       throw vscode.FileSystemError.FileNotFound(uri);
     }
     parent.entries.delete(basename);
     parent.mtime = Date.now();
     parent.size -= 1;
+
+    // async delete storage
+    await this._storage.delete(this._convertUriToFileKey(uri));
+
     this._fireSoon(
-      { type: vscode.FileChangeType.Changed, uri: dirname },
+      { type: vscode.FileChangeType.Changed, uri: dirUri },
       { uri, type: vscode.FileChangeType.Deleted }
     );
   }
 
-  createDirectory(uri: vscode.Uri): void {
+  @autoInit
+  async createDirectory(uri: vscode.Uri): Promise<void> {
     const basename = path.basename(uri.path);
-    const dirname = uri.with({ path: path.dirname(uri.path) });
-    const parent = this._lookupAsDirectory(dirname, false);
-
+    const dirUri = vscode.Uri.parse(`${FS_SCHEME}:${path.dirpath(uri.path)}`);
+    const parent = this._lookupAsDirectory(dirUri, false);
     const entry = new Directory(basename);
     parent.entries.set(entry.name, entry);
     parent.mtime = Date.now();
     parent.size += 1;
+
+    // async create directory storage
+    await this._storage.put(
+      this._convertUriToFileKey(dirUri),
+      parent.toUnit8Array()
+    );
+    await this._storage.put(
+      this._convertUriToFileKey(uri),
+      entry.toUnit8Array()
+    );
+
     this._fireSoon(
-      { type: vscode.FileChangeType.Changed, uri: dirname },
+      { type: vscode.FileChangeType.Changed, uri: dirUri },
       { type: vscode.FileChangeType.Created, uri }
     );
   }
@@ -175,7 +296,7 @@ export class MemFS implements vscode.FileSystemProvider {
   private _lookup(uri: vscode.Uri, silent: boolean): Entry | undefined;
   private _lookup(uri: vscode.Uri, silent: boolean): Entry | undefined {
     const parts = uri.path.split('/');
-    let entry: Entry = this.root;
+    let entry: Entry = this._root;
     for (const part of parts) {
       if (!part) {
         continue;
@@ -213,8 +334,17 @@ export class MemFS implements vscode.FileSystemProvider {
   }
 
   private _lookupParentDirectory(uri: vscode.Uri): Directory {
-    const dirname = uri.with({ path: path.dirname(uri.path) });
-    return this._lookupAsDirectory(dirname, false);
+    const dirUri = vscode.Uri.parse(`${FS_SCHEME}:${path.dirpath(uri.path)}`);
+    return this._lookupAsDirectory(dirUri, false);
+  }
+
+  private _convertUriToFileKey(uri: vscode.Uri) {
+    // 替换所有斜杠为下划线
+    return uri.path.replace(/\//g, '_');
+  }
+
+  private _convertFileKeyToUri(fileKey: string): vscode.Uri {
+    return vscode.Uri.parse(`${FS_SCHEME}:${fileKey.replace(/_/g, '/')}`);
   }
 
   // --- manage file events
@@ -244,15 +374,17 @@ export class MemFS implements vscode.FileSystemProvider {
     }, 5);
   }
 
-  // Custom Method
+  // Custom Public Method
+  @autoInit
   public async reset(
-    uri: vscode.Uri = vscode.Uri.parse(`${FS_SCHEME}:${this.root.name}`)
+    uri: vscode.Uri = vscode.Uri.parse(`${FS_SCHEME}:${this._root.name}`)
   ) {
-    for (const [name] of this.readDirectory(uri)) {
-      this.delete(vscode.Uri.parse(`${FS_SCHEME}:/${name}`));
+    for (const [name] of await this.readDirectory(uri)) {
+      await this.delete(vscode.Uri.parse(`${FS_SCHEME}:/${name}`));
     }
   }
 
+  @autoInit
   public async exportToZip(): Promise<void> {
     const rootZip = new JSZip();
     const stack: {
@@ -261,7 +393,7 @@ export class MemFS implements vscode.FileSystemProvider {
       parentZip: JSZip;
     }[] = [
       {
-        value: this.root,
+        value: this._root,
         path: '',
         parentZip: rootZip,
       },
@@ -298,7 +430,11 @@ export class MemFS implements vscode.FileSystemProvider {
     try {
       const content = await rootZip.generateAsync({ type: 'uint8array' });
       const path = await exportFile(content, 'memfs.zip');
-      vscode.window.showInformationMessage(`File saved successfully: ${path}`);
+      if (path) {
+        vscode.window.showInformationMessage(
+          `File saved successfully: ${path}`
+        );
+      }
     } catch (error) {
       const errMsg = `exportToZip failed:${(error as Error).message}`;
       logger.info(errMsg);
@@ -306,6 +442,7 @@ export class MemFS implements vscode.FileSystemProvider {
     }
   }
 
+  @autoInit
   public async importFromZip(uri: vscode.Uri): Promise<void> {
     const rawContent = await vscode.workspace.fs.readFile(uri);
     if (!rawContent) {
@@ -314,12 +451,10 @@ export class MemFS implements vscode.FileSystemProvider {
     const rootZip = await JSZip.loadAsync(rawContent);
     const stack: {
       value: Directory | File;
-      path: string;
       zip: JSZip;
     }[] = [
       {
-        value: this.root,
-        path: '',
+        value: this._root,
         zip: rootZip,
       },
     ];
@@ -327,20 +462,16 @@ export class MemFS implements vscode.FileSystemProvider {
       const currentItem = stack.pop()!;
       for (const currentFileMeta of Object.values(currentItem.zip.files)) {
         if (currentFileMeta.dir) {
-          this.createDirectory(
-            vscode.Uri.parse(
-              `${FS_SCHEME}:${currentItem.path}/${currentFileMeta.name}`
-            )
+          await this.createDirectory(
+            vscode.Uri.parse(`${FS_SCHEME}:/${currentFileMeta.name}`)
           );
         } else {
           const currentFileContent = await currentItem.zip
             .file(currentFileMeta.name)
             ?.async('uint8array');
           if (currentFileContent) {
-            this.writeFile(
-              vscode.Uri.parse(
-                `${FS_SCHEME}:${currentItem.path}${currentFileMeta.name}`
-              ),
+            await this.writeFile(
+              vscode.Uri.parse(`${FS_SCHEME}:/${currentFileMeta.name}`),
               currentFileContent,
               { create: true, overwrite: true }
             );

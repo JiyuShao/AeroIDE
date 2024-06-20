@@ -7,7 +7,7 @@ import { logger } from '../utils/logger';
 
 export async function registerFileSystem(context: vscode.ExtensionContext) {
   // init memFs
-  const memFs = new MemFS();
+  const memFs = new MemFS(context);
 
   // register a file system provider
   context.subscriptions.push(
@@ -26,6 +26,13 @@ export async function registerFileSystem(context: vscode.ExtensionContext) {
 
   if (!validFlag) {
     logger.error(`Only allow single-folder ${FS_SCHEME} workspace`);
+    await vscode.commands.executeCommand(
+      'vscode.openFolder',
+      vscode.Uri.parse(`${FS_SCHEME}:/`),
+      {
+        forceReuseWindow: true,
+      }
+    );
   }
 
   registerCommand(context, `${FS_SCHEME}.importDemoWorkspace`, async () => {

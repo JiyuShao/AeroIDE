@@ -12,7 +12,8 @@
     "noImplicitReturns": true,
     "allowSyntheticDefaultImports": true,
     "noFallthroughCasesInSwitch": true,
-    "noUnusedParameters": true
+    "noUnusedParameters": true,
+    "experimentalDecorators": true
   },
   "exclude": ["node_modules", "dist"],
   "$schema": "https://json.schemastore.org/tsconfig",
