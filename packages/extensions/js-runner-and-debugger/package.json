@@ -1,7 +1,7 @@
 {
   "name": "@aeroide/js-runner-and-debugger",
   "version": "0.0.1",
-  "type": "module",
+  "type": "commonjs",
   "displayName": "JS Runner & Debugger (In-browser)",
   "description": "Run js in browser with debugger",
   "engines": {
@@ -13,8 +13,8 @@
   "activationEvents": [
     "onFileSystem:memfs"
   ],
-  "main": "./dist/web/extension.cjs",
-  "browser": "./dist/web/extension.cjs",
+  "main": "./dist/web/extension.js",
+  "browser": "./dist/web/extension.js",
   "preview": true,
   "extensionDependencies": [
     "ms-vscode.wasm-wasi-core"
