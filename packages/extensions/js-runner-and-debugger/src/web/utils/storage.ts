@@ -1,6 +1,5 @@
 import vscode from 'vscode';
 // import { Connection } from 'vscode-languageserver';
-// import { logger } from './logger';
 // import { isWebEnv } from '../config';
 import { AutoInitClass, autoInit } from './decorator/auto-init-class';
 

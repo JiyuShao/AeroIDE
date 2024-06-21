@@ -339,12 +339,11 @@ export class MemFS extends AutoInitClass implements vscode.FileSystemProvider {
   }
 
   private _convertUriToFileKey(uri: vscode.Uri) {
-    // 替换所有斜杠为下划线
-    return uri.path.replace(/\//g, '_');
+    return encodeURIComponent(uri.path);
   }
 
   private _convertFileKeyToUri(fileKey: string): vscode.Uri {
-    return vscode.Uri.parse(`${FS_SCHEME}:${fileKey.replace(/_/g, '/')}`);
+    return vscode.Uri.parse(`${FS_SCHEME}:${decodeURIComponent(fileKey)}`);
   }
 
   // --- manage file events
@@ -379,8 +378,12 @@ export class MemFS extends AutoInitClass implements vscode.FileSystemProvider {
   public async reset(
     uri: vscode.Uri = vscode.Uri.parse(`${FS_SCHEME}:${this._root.name}`)
   ) {
-    for (const [name] of await this.readDirectory(uri)) {
-      await this.delete(vscode.Uri.parse(`${FS_SCHEME}:/${name}`));
+    for (const [name, fileType] of await this.readDirectory(uri)) {
+      await this.delete(
+        vscode.Uri.parse(
+          `${FS_SCHEME}:/${name}${fileType === vscode.FileType.Directory ? '/' : ''}`
+        )
+      );
     }
   }
 

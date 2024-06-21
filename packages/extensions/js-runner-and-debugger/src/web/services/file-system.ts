@@ -78,4 +78,8 @@ export async function registerFileSystem(context: vscode.ExtensionContext) {
   registerCommand(context, `${FS_SCHEME}.exportWorkspace`, async () => {
     await memFs.exportToZip();
   });
+
+  registerCommand(context, `${FS_SCHEME}.reset`, async () => {
+    await memFs.reset();
+  });
 }
