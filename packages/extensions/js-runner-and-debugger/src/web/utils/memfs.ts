@@ -379,11 +379,15 @@ export class MemFS extends AutoInitClass implements vscode.FileSystemProvider {
     uri: vscode.Uri = vscode.Uri.parse(`${FS_SCHEME}:${this._root.name}`)
   ) {
     for (const [name, fileType] of await this.readDirectory(uri)) {
-      await this.delete(
-        vscode.Uri.parse(
-          `${FS_SCHEME}:/${name}${fileType === vscode.FileType.Directory ? '/' : ''}`
-        )
-      );
+      try {
+        await this.delete(
+          vscode.Uri.parse(
+            `${FS_SCHEME}:/${name}${fileType === vscode.FileType.Directory ? '/' : ''}`
+          )
+        );
+      } catch (error) {
+        logger.error('MemFS.reset failed:', error);
+      }
     }
   }
 

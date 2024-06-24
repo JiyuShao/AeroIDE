@@ -1,6 +1,12 @@
 import vscode from 'vscode';
 import { workspace, ExtensionContext, Uri } from 'vscode';
-import { Wasm, RootFileSystem, WasmPseudoterminal } from '@vscode/wasm-wasi';
+import {
+  Wasm,
+  RootFileSystem,
+  WasmPseudoterminal,
+  WasmProcess,
+  PseudoterminalState,
+} from '@vscode/wasm-wasi';
 import { ansiColor } from './ansi-color';
 
 export interface WasiEnv {
@@ -32,22 +38,25 @@ export interface WasiTerminal {
   pty: WasmPseudoterminal;
   terminal: vscode.Terminal;
 }
-let wasiTerminalMap: WasiTerminal | undefined = undefined;
-export function requirePseudoTerminal(wasm: Wasm, _name: string): WasiTerminal {
-  if (!wasiTerminalMap) {
-    const pty = wasm.createPseudoterminal();
+let wasiTerminal: WasiTerminal | undefined = undefined;
+export async function requirePseudoTerminal(
+  name = 'wasm-wasi'
+): Promise<WasiTerminal> {
+  if (!wasiTerminal) {
+    const wasm = await Wasm.load();
+    const pty = wasm.createPseudoterminal({ history: true });
     const terminal = vscode.window.createTerminal({
-      name: 'wasm-wasi',
+      name,
       pty,
       isTransient: true,
     });
     terminal.show(true);
-    wasiTerminalMap = {
+    wasiTerminal = {
       pty,
       terminal,
     };
   }
-  return wasiTerminalMap;
+  return wasiTerminal;
 }
 
 /**
@@ -75,8 +84,13 @@ const WASI_COMMAND_MAPPING: Record<string, string> = {
   coreutils: 'assets/coreutils/coreutils.async.wasm',
   esbuild: 'assets/esbuild-wasm-wasi/esbuild.wasm',
 };
-const WASI_MOCK_COMMAND_RESPONSE: Record<string, string> = {};
-WASI_MOCK_COMMAND_RESPONSE['help'] = `
+type MockCommandFunction = (
+  wasiEnv: WasiEnv,
+  wasiTerminal: WasiTerminal
+) => Promise<void>;
+const WASI_MOCK_COMMAND_MAPPING: Record<string, string | MockCommandFunction> =
+  {};
+WASI_MOCK_COMMAND_MAPPING['help'] = `
 Usage: command [arguments...]
        command --help
 
@@ -91,73 +105,159 @@ Currently defined command:
     shake256sum, shred, shuf, sleep, sort, split, sum, tac, tail, tee, test,
     touch, tr, true, truncate, tsort, unexpand, uniq, wc, yes, esbuild
 `;
-WASI_MOCK_COMMAND_RESPONSE['-h'] = WASI_MOCK_COMMAND_RESPONSE['help'];
+WASI_MOCK_COMMAND_MAPPING['-h'] = WASI_MOCK_COMMAND_MAPPING['help'];
+WASI_MOCK_COMMAND_MAPPING['clear'] = async (
+  _wasiEnv: WasiEnv,
+  wasiTerminal: WasiTerminal
+) => {
+  const { pty } = wasiTerminal;
+  // \x1bc => Reset terminal
+  // \x1b[0J => Clear screen from cursor down
+  // \x1b[1J => Clear screen from cursor up
+  // \x1b[2J => Clear entire screen
+  // \x1b[3J   => Clears scroll back buffer (not documented)
+  // \x1b[0;0H => Move cursor to 0,0
+  // @ts-expect-error using internal _onDidWrite
+  pty._onDidWrite.fire('\x1bc\x1b[0J\x1b[1J\x1b[2J\x1b[3J\x1b[0;0H');
+};
 
+// Create process variable to Ctrl-C termite
+let wasmProcess: WasmProcess | null = null;
+// Only add readline listener to pty once
+let isReadlineMode: boolean = false;
 export async function runWasiCommand(
   context: vscode.ExtensionContext,
   args: (string | vscode.Uri)[]
 ) {
-  if (args.length === 0) {
-    throw new Error('Please input wasi command');
+  // Create a pseudoterminal to provide stdio to the WASM process.
+  const wasiTerminal = await requirePseudoTerminal();
+  const { pty } = wasiTerminal;
+
+  const filteredArgs = args
+    .map(currentArg => {
+      if (typeof currentArg === 'string') {
+        return currentArg.replace(/[\n\r]/g, '');
+      }
+      return currentArg;
+    })
+    .filter(e => e);
+
+  const lifecycle = {
+    postCommandFn() {
+      pty.write(new TextEncoder().encode(ansiColor('> ', 'green')));
+    },
+  };
+  if (filteredArgs.length === 0) {
+    lifecycle.postCommandFn();
+    return;
   }
 
   // Use coreutils as default command
   let commandName = 'coreutils';
   let commandDisplayName = '';
   let commandArgs = [];
-  if (typeof args[0] === 'string' && WASI_COMMAND_MAPPING[args[0]]) {
-    commandName = args[0];
+  if (
+    typeof filteredArgs[0] === 'string' &&
+    WASI_COMMAND_MAPPING[filteredArgs[0]]
+  ) {
+    commandName = filteredArgs[0];
   }
   if (commandName === 'coreutils') {
-    commandArgs = [...args];
+    commandArgs = [...filteredArgs];
   } else {
     commandDisplayName = commandName;
-    commandArgs = [...args.slice(1)];
+    commandArgs = [...filteredArgs.slice(1)];
   }
+  const commandDisplay = [commandDisplayName, ...commandArgs]
+    .filter(e => e)
+    .join(' ');
 
   // Load the WASM module.
-  const { wasm, fs, module } = await requireWasiEnv(
+  const wasiEnv = await requireWasiEnv(
     context,
     WASI_COMMAND_MAPPING[commandName]
   );
+  const { wasm, fs, module } = wasiEnv;
 
-  // Create a pseudoterminal to provide stdio to the WASM process.
-  const { pty } = requirePseudoTerminal(wasm, commandName);
-  // Create a WASM process.
-  pty.write(
-    new TextEncoder().encode(
-      ansiColor(
-        `$ ${[commandDisplayName, ...commandArgs]?.join(' ')}\n\n`,
-        'green'
-      )
-    )
-  );
-
-  // Handle mock command
-  if (
-    typeof commandArgs[0] === 'string' &&
-    WASI_MOCK_COMMAND_RESPONSE[commandArgs[0]]
-  ) {
-    pty.write(
-      new TextEncoder().encode(
-        WASI_MOCK_COMMAND_RESPONSE[commandArgs[0]].trim() + '\n\n'
-      )
-    );
-    return;
+  const mockCommandValue =
+    typeof commandArgs[0] === 'string'
+      ? WASI_MOCK_COMMAND_MAPPING[commandArgs[0]]
+      : undefined;
+  if (mockCommandValue) {
+    if (typeof mockCommandValue === 'string') {
+      // Handle mock command
+      pty.write(
+        new TextEncoder().encode((mockCommandValue as string).trim() + '\n')
+      );
+    } else if (typeof mockCommandValue === 'function') {
+      await (mockCommandValue as MockCommandFunction)(wasiEnv, wasiTerminal);
+    }
+  } else {
+    try {
+      // Run real command
+      wasmProcess = await wasm.createProcess(commandName, module, {
+        rootFileSystem: fs,
+        stdio: pty.stdio,
+        args: commandArgs,
+      });
+      // Run the process and wait for its result.
+      const result = await wasmProcess.run();
+      if (result !== 0) {
+        pty.write(
+          new TextEncoder().encode(
+            ansiColor(
+              `Process ${commandDisplay} ended with error: ${result}\n`,
+              'red'
+            )
+          )
+        );
+      }
+    } catch (error) {
+      pty.write(
+        new TextEncoder().encode(
+          ansiColor(
+            `Process ${commandDisplay} ended with error: ${error}\n`,
+            'red'
+          )
+        )
+      );
+    }
+    wasmProcess = null;
   }
+  pty.write(new TextEncoder().encode('\n'));
+  lifecycle.postCommandFn();
 
-  // Run real command
-  const process = await wasm.createProcess(commandName, module, {
-    rootFileSystem: fs,
-    stdio: pty.stdio,
-    args: commandArgs,
-  });
-  // Run the process and wait for its result.
-  const result = await process.run();
-  if (result !== 0) {
-    throw new Error(
-      `Process ${commandName} ${commandArgs.join(' ')} ended with error: ${result}`
-    );
+  if (!isReadlineMode) {
+    isReadlineMode = true;
+    const orignalHandleInput = pty.handleInput;
+    pty.handleInput = function (data: string) {
+      if (
+        [PseudoterminalState.idle, PseudoterminalState.busy].includes(
+          this.getState()
+        )
+      ) {
+        // 处理用户输入的 ASCII 控制字符
+        if (data === '\x03') {
+          // Ctrl+C
+          if (wasmProcess) {
+            wasmProcess.terminate();
+          }
+        } else if (data === '\x0c') {
+          // Ctrl+L
+          runWasiCommand(context, ['clear']);
+        }
+      }
+      return orignalHandleInput?.apply(this, [data]);
+    };
+    let nextCommand: string = '';
+    while (true) {
+      nextCommand = await pty.readline();
+      if (nextCommand) {
+        await runWasiCommand(
+          context,
+          nextCommand ? nextCommand.trim().split(' ') : []
+        );
+      }
+    }
   }
-  pty.write(new TextEncoder().encode('\n\n'));
 }
