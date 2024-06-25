@@ -6,6 +6,7 @@ import { LOGGER_LEVEL } from './config';
 import { registerFileSystem } from './services/file-system';
 import { registerWasi } from './services/wasi';
 import { registerJSRunner } from './services/js-runner';
+import { registerNpm } from './services/npm';
 import { registerHelloWorld } from './services/hello-world';
 
 logger.setLevel(LOGGER_LEVEL);
@@ -21,6 +22,7 @@ export async function activate(context: vscode.ExtensionContext) {
   registerFileSystem(context);
   registerWasi(context);
   registerJSRunner(context);
+  registerNpm(context);
   registerHelloWorld(context);
 }
 

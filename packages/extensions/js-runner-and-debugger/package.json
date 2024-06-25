@@ -20,6 +20,24 @@
     "ms-vscode.wasm-wasi-core"
   ],
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "js-runner-and-debugger",
+          "title": "NPM Dependencies",
+          "icon": "assets/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "js-runner-and-debugger": [
+        {
+          "type": "webview",
+          "id": "js-runner-and-debugger.npm",
+          "name": "NPM Dependencies"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "js-runner-and-debugger.helloWorld",
@@ -42,8 +60,8 @@
         "title": "JS Runner & Debugger: MemFS Reset"
       },
       {
-        "command": "js-runner-and-debugger.wasi.command",
-        "title": "JS Runner & Debugger: Run WASI Command"
+        "command": "js-runner-and-debugger.wasi.openTerminal",
+        "title": "JS Runner & Debugger: Open WASI Terminal"
       },
       {
         "command": "js-runner-and-debugger.runner.test",
@@ -75,9 +93,12 @@
     "@vscode/wasm-wasi": "0.13.0-pre.1",
     "assert": "^2.1.0",
     "esbuild-wasm": "^0.21.3",
+    "inversify": "^6.0.2",
+    "inversify-props": "^2.2.6",
     "jszip": "^3.10.1",
     "mocha": "^10.4.0",
     "process": "^0.11.10",
+    "reflect-metadata": "^0.2.2",
     "ts-loader": "^9.5.1",
     "typescript": "^5.4.5",
     "vscode-languageserver": "^9.0.1",

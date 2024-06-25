@@ -6,7 +6,8 @@
     "outDir": "dist",
     "lib": ["ES2020", "WebWorker"],
     "declaration": true,
-    "declarationDir": "dist"
+    "declarationDir": "dist",
+    "emitDecoratorMetadata": true
   },
   "include": ["src"],
   "$schema": "https://json.schemastore.org/tsconfig",
