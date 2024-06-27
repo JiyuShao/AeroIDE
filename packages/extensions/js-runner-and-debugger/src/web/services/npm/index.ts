@@ -8,7 +8,7 @@ import { NpmClient } from './clients/npm-client';
 import { WebviewProviderEvents } from '../../utils/webview/webview/webview-provider';
 import { AddDependencyCommand } from './commands/add-dependency-command';
 
-export function registerNpm(context: vscode.ExtensionContext) {
+export async function registerNpm(context: vscode.ExtensionContext) {
   const app = bootstrap({
     context,
     routes,
