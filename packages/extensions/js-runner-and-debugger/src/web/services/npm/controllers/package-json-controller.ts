@@ -1,4 +1,4 @@
-import vscode from 'vscode';
+import * as vscode from 'vscode';
 import { Controller } from '../../../utils/webview/routing/controller';
 import { inject } from '../../../utils/webview';
 import { ClientManager } from '../clients/client-manager';
@@ -9,7 +9,7 @@ export class PackageJsonController extends Controller {
 
   async getPackageJSONFiles() {
     const packages = await vscode.workspace.findFiles(
-      '**/package.json',
+      '**​/*.js',
       '**/node_modules/**'
     );
     return packages.map(item =>

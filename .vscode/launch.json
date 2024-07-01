@@ -12,7 +12,9 @@
       "args": [
         // "--profile-temp",
         "--profile=VS Code Extension Debug",
-        "--extensionDevelopmentPath=${workspaceFolder}/packages/extensions/js-runner-and-debugger"
+        "--extensionDevelopmentPath=${workspaceFolder}/packages/extensions/js-runner-and-debugger",
+        "--enable-proposed-api",
+        "undefined_publisher.@aeroide/js-runner-and-debugger"
       ],
       "outFiles": [
         "${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/web/**/*.js"
@@ -28,7 +30,9 @@
         // "--profile-temp",
         "--profile=VS Code Extension Debug",
         "--extensionDevelopmentPath=${workspaceFolder}/packages/extensions/js-runner-and-debugger",
-        "--extensionDevelopmentKind=web"
+        "--extensionDevelopmentKind=web",
+        "--enable-proposed-api",
+        "undefined_publisher.@aeroide/js-runner-and-debugger"
       ],
       "outFiles": [
         "${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/web/**/*.js"

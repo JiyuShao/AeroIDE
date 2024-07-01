@@ -1,4 +1,4 @@
-import vscode from 'vscode';
+import * as vscode from 'vscode';
 // import { Connection } from 'vscode-languageserver';
 // import { isWebEnv } from '../config';
 import { AutoInitClass, autoInit } from './decorator/auto-init-class';

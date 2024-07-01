@@ -38,6 +38,7 @@ const webExtensionConfig = {
       // see https://webpack.js.org/configuration/resolve/#resolvefallback
       // for the list of Node.js core module polyfills.
       assert: require.resolve('assert'),
+      process: require.resolve('process/browser'),
     },
   },
   module: {
@@ -50,6 +51,13 @@ const webExtensionConfig = {
             loader: 'ts-loader',
           },
         ],
+      },
+      {
+        test: /\.m?js$/,
+        resolve: {
+          // fix process/browser import issue
+          fullySpecified: false,
+        },
       },
     ],
   },

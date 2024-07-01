@@ -42,6 +42,48 @@ export function relative(from: string, to: string): string {
   const downSegments = toSegments.slice(commonLength);
   return upSegments.concat(downSegments).join('/');
 }
+
 function removeTrailingSlash(str: string) {
   return str.replace(/\/+$/, '');
+}
+
+function normalizeArray(parts: string[], allowAboveRoot: boolean): string[] {
+  const res: string[] = [];
+
+  for (let i = 0; i < parts.length; i++) {
+    const p = parts[i];
+
+    // Ignore empty parts and current directory parts.
+    if (!p || p === '.') {
+      continue;
+    }
+
+    // Handle '..' to go up one directory.
+    if (p === '..') {
+      if (res.length && res[res.length - 1] !== '..') {
+        res.pop();
+      } else if (allowAboveRoot) {
+        res.push('..');
+      }
+    } else {
+      res.push(p);
+    }
+  }
+
+  return res;
+}
+
+export function join(...paths: string[]): string {
+  // Split the paths into path segments.
+  let parts: string[] = [];
+
+  for (let i = 0; i < paths.length; i++) {
+    parts = parts.concat(paths[i].split('/'));
+  }
+
+  // Normalize the array of path segments.
+  parts = normalizeArray(parts, false);
+
+  // Recombine the array into a string.
+  return '/' + parts.join('/');
 }

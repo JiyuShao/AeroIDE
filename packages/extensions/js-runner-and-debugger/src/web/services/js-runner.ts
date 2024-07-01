@@ -1,4 +1,4 @@
-import vscode from 'vscode';
+import * as vscode from 'vscode';
 import { registerCommand } from '../utils/commands';
 import { FS_SCHEME } from '../config';
 import { runWasiCommand, toWasm } from '../utils/wasi';

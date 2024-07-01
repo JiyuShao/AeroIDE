@@ -1,4 +1,4 @@
-import vscode from 'vscode';
+import * as vscode from 'vscode';
 import { registerCommand } from '../utils/commands';
 
 export function registerHelloWorld(context: vscode.ExtensionContext) {

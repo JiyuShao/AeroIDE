@@ -4,14 +4,15 @@
  *--------------------------------------------------------------------------------------------*/
 // Reference: https://github.com/microsoft/vscode-extension-samples/blob/main/fsprovider-sample/src/fileSystemProvider.ts
 
-import * as path from './paths';
+import * as path from '../paths';
 import * as vscode from 'vscode';
 import JSZip from 'jszip';
-import { logger } from './logger';
-import { FS_SCHEME } from '../config';
-import { exportFile } from './file';
-import { IStorage, Storage } from './storage';
-import { AutoInitClass, autoInit } from './decorator/auto-init-class';
+import { logger } from '../logger';
+import { FS_SCHEME } from '../../config';
+import { exportFile } from '../file';
+import { IStorage, Storage } from '../storage';
+import { AutoInitClass, autoInit } from '../decorator/auto-init-class';
+import { MemFSSearchProvider } from './memfs-search-provider';
 
 abstract class BaseFile implements vscode.FileStat {
   type: vscode.FileType;
@@ -105,6 +106,19 @@ export class MemFS extends AutoInitClass implements vscode.FileSystemProvider {
     super();
     this._root = new Directory('/');
     this._storage = new Storage(context);
+    const memFsSearchProvider = new MemFSSearchProvider(this);
+    context.subscriptions.push(
+      vscode.workspace.registerTextSearchProvider(
+        FS_SCHEME,
+        memFsSearchProvider
+      )
+    );
+    context.subscriptions.push(
+      vscode.workspace.registerFileSearchProvider(
+        FS_SCHEME,
+        memFsSearchProvider
+      )
+    );
   }
 
   protected _init = async () => {

@@ -1,4 +1,4 @@
-import vscode from 'vscode';
+import * as vscode from 'vscode';
 
 export async function importFile(): Promise<vscode.Uri | void> {
   const uris = await vscode.window.showOpenDialog({

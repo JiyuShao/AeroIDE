@@ -16,6 +16,10 @@
   "main": "./dist/web/extension.js",
   "browser": "./dist/web/extension.js",
   "preview": true,
+  "enabledApiProposals": [
+    "textSearchProvider",
+    "fileSearchProvider"
+  ],
   "extensionDependencies": [
     "ms-vscode.wasm-wasi-core"
   ],
@@ -96,6 +100,7 @@
     "inversify": "^6.0.2",
     "inversify-props": "^2.2.6",
     "jszip": "^3.10.1",
+    "minimatch": "^9.0.5",
     "mocha": "^10.4.0",
     "process": "^0.11.10",
     "reflect-metadata": "^0.2.2",

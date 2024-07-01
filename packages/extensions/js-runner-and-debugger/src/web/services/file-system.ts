@@ -15,7 +15,6 @@ export async function registerFileSystem(context: vscode.ExtensionContext) {
       isCaseSensitive: true,
     })
   );
-
   // open memfs root folder
   const workspaceFolders = vscode.workspace.workspaceFolders || [];
   const validFlag =

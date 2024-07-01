@@ -1,4 +1,4 @@
-import vscode from 'vscode';
+import * as vscode from 'vscode';
 import { EXTENSION_NAME } from '../config';
 import { logger } from './logger';
 

@@ -1,4 +1,4 @@
-import vscode from 'vscode';
+import * as vscode from 'vscode';
 import { Client } from './client';
 import { injectable } from '../../../utils/webview';
 // import { dirname } from '../../../utils/paths';

@@ -1,4 +1,4 @@
-import vscode from 'vscode';
+import * as vscode from 'vscode';
 import 'reflect-metadata';
 import { bootstrap } from '../../utils/webview/app/bootstrap';
 import { Bus } from '../../utils/webview/bus/bus';
