@@ -1,10 +1,3 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-
-'use strict';
-
 import * as vscode from 'vscode';
 import { MinimatchOptions, minimatch } from 'minimatch';
 import { MemFS } from './memfs-fs-provider';
@@ -22,11 +15,17 @@ function escapeRegExpCharacters(value: string): string {
   return value.replace(/[\-\\\{\}\*\+\?\|\^\$\.\[\]\(\)\#]/g, '\\$&');
 }
 
-// TODO: remove
-setTimeout(async () => {
-  const files = await vscode.workspace.findFiles('**/**.ts', '**/folder/**');
-  console.log(files);
-}, 5000);
+function convertFolderMatchPatterns(patterns: string[]) {
+  const result = new Set<string>();
+  patterns.forEach(current => {
+    result.add(current);
+    // 检查和转换格式
+    if (current.endsWith('/**')) {
+      result.add(current.slice(0, -3)); // 去掉末尾的/**部分
+    }
+  });
+  return Array.from(result);
+}
 
 export class MemFSSearchProvider
   implements vscode.TextSearchProvider, vscode.FileSearchProvider
@@ -71,6 +70,9 @@ export class MemFSSearchProvider
 
     for (const [name, type] of dirItems) {
       const dirItemPath = path.join(relativeDir, name);
+      if (!this._matchPath(dirItemPath, type, options)) {
+        continue;
+      }
       if (type === vscode.FileType.Directory) {
         await this._textSearchDir(
           baseFolder,
@@ -188,19 +190,25 @@ export class MemFSSearchProvider
     const matchOptions: MinimatchOptions = {
       partial: false,
     };
+
+    let finalIncludes = includes;
+    let finalExcludes = excludes;
+    if (type === vscode.FileType.Directory) {
+      finalIncludes = convertFolderMatchPatterns(includes);
+      finalExcludes = convertFolderMatchPatterns(excludes);
+    }
     // 首先检查排除模式，如果路径匹配任意一个排除模式，返回false
-    for (const excludePattern of excludes) {
+    for (const excludePattern of finalExcludes) {
       if (minimatch(path, excludePattern, matchOptions)) {
         return false; // 如果匹配到排除模式，该路径不满足要求
       }
     }
-
     // 如果目录没有命中 excludes，代表需要继续递归查询
     if (type === vscode.FileType.Directory) {
       return true;
     } else if (type === vscode.FileType.File) {
       // 检查包含模式，如果路径匹配任意一个包含模式，返回true
-      for (const includePattern of includes) {
+      for (const includePattern of finalIncludes) {
         if (minimatch(path, includePattern, matchOptions)) {
           return true; // 如果匹配到包含模式，该路径满足要求
         }

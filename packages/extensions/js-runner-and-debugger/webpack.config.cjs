@@ -1,13 +1,4 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-
-/* eslint @typescript-eslint/no-var-requires: "off" */
-//@ts-check
-'use strict';
-
-//@ts-check
+/* eslint-disable @typescript-eslint/no-var-requires */
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
 
 const path = require('path');
