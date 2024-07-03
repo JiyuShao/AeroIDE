@@ -1,30 +1,21 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+'use strict';
+
 import * as vscode from 'vscode';
 import { MinimatchOptions, minimatch } from 'minimatch';
 import { MemFS } from './memfs-fs-provider';
 import * as path from '../paths';
+import { escapeRegExpCharacters } from '../strings';
 
 function joinPath(resource: vscode.Uri, pathFragment: string): vscode.Uri {
   const joinedPath = path.join(resource.path || '/', pathFragment);
   return resource.with({
     path: joinedPath,
   });
-}
-
-function escapeRegExpCharacters(value: string): string {
-  // eslint-disable-next-line no-useless-escape
-  return value.replace(/[\-\\\{\}\*\+\?\|\^\$\.\[\]\(\)\#]/g, '\\$&');
-}
-
-function convertFolderMatchPatterns(patterns: string[]) {
-  const result = new Set<string>();
-  patterns.forEach(current => {
-    result.add(current);
-    // 检查和转换格式
-    if (current.endsWith('/**')) {
-      result.add(current.slice(0, -3)); // 去掉末尾的/**部分
-    }
-  });
-  return Array.from(result);
 }
 
 export class MemFSSearchProvider
@@ -191,14 +182,8 @@ export class MemFSSearchProvider
       partial: false,
     };
 
-    let finalIncludes = includes;
-    let finalExcludes = excludes;
-    if (type === vscode.FileType.Directory) {
-      finalIncludes = convertFolderMatchPatterns(includes);
-      finalExcludes = convertFolderMatchPatterns(excludes);
-    }
     // 首先检查排除模式，如果路径匹配任意一个排除模式，返回false
-    for (const excludePattern of finalExcludes) {
+    for (const excludePattern of excludes) {
       if (minimatch(path, excludePattern, matchOptions)) {
         return false; // 如果匹配到排除模式，该路径不满足要求
       }
@@ -207,14 +192,17 @@ export class MemFSSearchProvider
     if (type === vscode.FileType.Directory) {
       return true;
     } else if (type === vscode.FileType.File) {
+      // 如果用户没输入 include，默认匹配所有的
+      if (includes.length === 0) {
+        return true;
+      }
       // 检查包含模式，如果路径匹配任意一个包含模式，返回true
-      for (const includePattern of finalIncludes) {
+      for (const includePattern of includes) {
         if (minimatch(path, includePattern, matchOptions)) {
           return true; // 如果匹配到包含模式，该路径满足要求
         }
       }
     }
-    // 如果没有匹配任何包含模式，返回false
     return false;
   }
 }
