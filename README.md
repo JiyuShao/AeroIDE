@@ -17,6 +17,7 @@ Yet Another IDE: 基于浏览器的在线代码编辑器
   - [x] 访问虚拟工作区文件系统
   - [x] 对接 coreutils
   - [x] 对接 esbuild
+  - [x] 实现 Ctrl+C 终端命令能力
   - [x] 实现 Ctrl+L/clear 清屏能力
   - [x] 实现命令行历史记录能力
 - [ ] JS 在线开发调试

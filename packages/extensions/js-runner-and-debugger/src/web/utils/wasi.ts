@@ -3,7 +3,7 @@ import { workspace, ExtensionContext, Uri } from 'vscode';
 import {
   Wasm,
   RootFileSystem,
-  WasmPseudoterminal,
+  WasmPseudoterminal as OrignalWasmPseudoterminal,
   WasmProcess,
   PseudoterminalState,
 } from '@vscode/wasm-wasi';
@@ -34,6 +34,12 @@ export async function requireWasiEnv(
   return wasiEnvMap[wasmPath];
 }
 
+interface WasmPseudoterminal extends OrignalWasmPseudoterminal {
+  commandHistory?: {
+    current: number;
+    history: string[];
+  };
+}
 export interface WasiTerminal {
   pty: WasmPseudoterminal;
   terminal: vscode.Terminal;
@@ -119,6 +125,22 @@ WASI_MOCK_COMMAND_MAPPING['clear'] = async (
   // \x1b[0;0H => Move cursor to 0,0
   // @ts-expect-error using internal _onDidWrite
   pty._onDidWrite.fire('\x1bc\x1b[0J\x1b[1J\x1b[2J\x1b[3J\x1b[0;0H');
+};
+
+WASI_MOCK_COMMAND_MAPPING['history'] = async (
+  _wasiEnv: WasiEnv,
+  wasiTerminal: WasiTerminal
+) => {
+  const { pty } = wasiTerminal;
+  const history = pty.commandHistory?.history || [];
+  const result = history.map((current, index) => {
+    if (index === history.length - 1) {
+      return '';
+    }
+    return `${index + 1} ${current}\n`;
+  });
+
+  pty.write(new TextEncoder().encode(result?.join('')));
 };
 
 // Create process variable to Ctrl-C termite
