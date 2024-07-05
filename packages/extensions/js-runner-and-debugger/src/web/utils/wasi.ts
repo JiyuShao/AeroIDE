@@ -34,35 +34,47 @@ export async function requireWasiEnv(
   return wasiEnvMap[wasmPath];
 }
 
+// 为了实现 Ctrl-L 与 history 功能，进行了一定程度的 hack
+// Reference: https://github.com/microsoft/vscode-wasm/blob/main/wasm-wasi-core/src/common/terminal.ts#L178
 interface WasmPseudoterminal extends OrignalWasmPseudoterminal {
   commandHistory?: {
     current: number;
     history: string[];
+    markExecuted: () => void;
+  };
+  lineBuffer?: {
+    clear: () => void;
   };
 }
 export interface WasiTerminal {
   pty: WasmPseudoterminal;
   terminal: vscode.Terminal;
+  state: {
+    wasmProcess: WasmProcess | null;
+    isReadlineMode: boolean;
+  };
 }
-let wasiTerminal: WasiTerminal | undefined = undefined;
 export async function requirePseudoTerminal(
   name = 'wasm-wasi'
 ): Promise<WasiTerminal> {
-  if (!wasiTerminal) {
-    const wasm = await Wasm.load();
-    const pty = wasm.createPseudoterminal({ history: true });
-    const terminal = vscode.window.createTerminal({
-      name,
-      pty,
-      isTransient: true,
-    });
-    terminal.show(true);
-    wasiTerminal = {
-      pty,
-      terminal,
-    };
-  }
-  return wasiTerminal;
+  const wasm = await Wasm.load();
+  const pty = wasm.createPseudoterminal({ history: true });
+  const terminal = vscode.window.createTerminal({
+    name,
+    pty,
+    isTransient: true,
+  });
+  terminal.show(true);
+  return {
+    pty,
+    terminal,
+    state: {
+      // Create process variable to Ctrl-C termite
+      wasmProcess: null,
+      // Only add readline listener to pty once
+      isReadlineMode: false,
+    },
+  };
 }
 
 /**
@@ -125,6 +137,7 @@ WASI_MOCK_COMMAND_MAPPING['clear'] = async (
   // \x1b[0;0H => Move cursor to 0,0
   // @ts-expect-error using internal _onDidWrite
   pty._onDidWrite.fire('\x1bc\x1b[0J\x1b[1J\x1b[2J\x1b[3J\x1b[0;0H');
+  pty.lineBuffer?.clear();
 };
 
 WASI_MOCK_COMMAND_MAPPING['history'] = async (
@@ -143,18 +156,12 @@ WASI_MOCK_COMMAND_MAPPING['history'] = async (
   pty.write(new TextEncoder().encode(result?.join('')));
 };
 
-// Create process variable to Ctrl-C termite
-let wasmProcess: WasmProcess | null = null;
-// Only add readline listener to pty once
-let isReadlineMode: boolean = false;
 export async function runWasiCommand(
   context: vscode.ExtensionContext,
+  wasiTerminal: WasiTerminal,
   args: (string | vscode.Uri)[]
 ) {
-  // Create a pseudoterminal to provide stdio to the WASM process.
-  const wasiTerminal = await requirePseudoTerminal();
   const { pty } = wasiTerminal;
-
   const filteredArgs = args
     .map(currentArg => {
       if (typeof currentArg === 'string') {
@@ -217,13 +224,17 @@ export async function runWasiCommand(
   } else {
     try {
       // Run real command
-      wasmProcess = await wasm.createProcess(commandName, module, {
-        rootFileSystem: fs,
-        stdio: pty.stdio,
-        args: commandArgs,
-      });
+      wasiTerminal.state.wasmProcess = await wasm.createProcess(
+        commandName,
+        module,
+        {
+          rootFileSystem: fs,
+          stdio: pty.stdio,
+          args: commandArgs,
+        }
+      );
       // Run the process and wait for its result.
-      const result = await wasmProcess.run();
+      const result = await wasiTerminal.state.wasmProcess.run();
       if (result !== 0) {
         pty.write(
           new TextEncoder().encode(
@@ -244,13 +255,13 @@ export async function runWasiCommand(
         )
       );
     }
-    wasmProcess = null;
+    wasiTerminal.state.wasmProcess = null;
   }
   pty.write(new TextEncoder().encode('\n'));
   lifecycle.postCommandFn();
 
-  if (!isReadlineMode) {
-    isReadlineMode = true;
+  if (!wasiTerminal.state.isReadlineMode) {
+    wasiTerminal.state.isReadlineMode = true;
     const orignalHandleInput = pty.handleInput;
     pty.handleInput = function (data: string) {
       if (
@@ -261,12 +272,13 @@ export async function runWasiCommand(
         // 处理用户输入的 ASCII 控制字符
         if (data === '\x03') {
           // Ctrl+C
-          if (wasmProcess) {
-            wasmProcess.terminate();
+          if (wasiTerminal.state.wasmProcess) {
+            wasiTerminal.state.wasmProcess.terminate();
+            wasiTerminal.state.wasmProcess = null;
           }
         } else if (data === '\x0c') {
           // Ctrl+L
-          runWasiCommand(context, ['clear']);
+          runWasiCommand(context, wasiTerminal, ['clear']);
         }
       }
       return orignalHandleInput?.apply(this, [data]);
@@ -277,6 +289,7 @@ export async function runWasiCommand(
       if (nextCommand) {
         await runWasiCommand(
           context,
+          wasiTerminal,
           nextCommand ? nextCommand.trim().split(' ') : []
         );
       }

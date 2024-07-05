@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { registerCommand } from '../utils/commands';
 import { FS_SCHEME } from '../config';
-import { runWasiCommand, toWasm } from '../utils/wasi';
+import { requirePseudoTerminal, runWasiCommand, toWasm } from '../utils/wasi';
 import { fileExists } from '../utils/file';
 
 export async function registerJSRunner(context: vscode.ExtensionContext) {
@@ -25,7 +25,8 @@ export async function registerJSRunner(context: vscode.ExtensionContext) {
       );
     }
 
-    await runWasiCommand(context, [
+    const wasiTerminal = await requirePseudoTerminal();
+    await runWasiCommand(context, wasiTerminal, [
       'esbuild',
       wasmEntryFile,
       `--outfile=${wasmOutFile}`,
