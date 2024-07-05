@@ -7,7 +7,9 @@ import {
   WasmProcess,
   PseudoterminalState,
 } from '@vscode/wasm-wasi';
+import { logger } from './logger';
 import { ansiColor } from './ansi-color';
+import { CancelManager } from './cancel-manager';
 
 export interface WasiEnv {
   wasm: Wasm;
@@ -180,6 +182,8 @@ export async function runWasiCommand(
     lifecycle.postCommandFn();
     return;
   }
+  // 取消管理器
+  const cancelManager = new CancelManager();
 
   // Use coreutils as default command
   let commandName = 'coreutils';
@@ -262,6 +266,10 @@ export async function runWasiCommand(
 
   if (!wasiTerminal.state.isReadlineMode) {
     wasiTerminal.state.isReadlineMode = true;
+    pty.onDidCloseTerminal(() => {
+      cancelManager.cancel();
+      wasiTerminal.terminal.dispose();
+    });
     const orignalHandleInput = pty.handleInput;
     pty.handleInput = function (data: string) {
       if (
@@ -284,14 +292,18 @@ export async function runWasiCommand(
       return orignalHandleInput?.apply(this, [data]);
     };
     let nextCommand: string = '';
-    while (true) {
-      nextCommand = await pty.readline();
-      if (nextCommand) {
-        await runWasiCommand(
-          context,
-          wasiTerminal,
-          nextCommand ? nextCommand.trim().split(' ') : []
-        );
+    while (!cancelManager.signal.cancelled) {
+      try {
+        nextCommand = await cancelManager.runCancellable(pty.readline());
+        if (nextCommand) {
+          await runWasiCommand(
+            context,
+            wasiTerminal,
+            nextCommand ? nextCommand.trim().split(' ') : []
+          );
+        }
+      } catch (error) {
+        logger.error('Terminal run command failed', error);
       }
     }
   }
