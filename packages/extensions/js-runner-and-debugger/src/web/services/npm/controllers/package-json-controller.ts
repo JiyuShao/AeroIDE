@@ -9,12 +9,11 @@ export class PackageJsonController extends Controller {
 
   async getPackageJSONFiles() {
     const packages = await vscode.workspace.findFiles(
-      '**​/*.js',
+      '**/package.json',
       '**/node_modules/**'
     );
     return packages.map(item =>
-      // @ts-expect-error workspaceFolders has value
-      relative(workspace.workspaceFolders[0].uri.fsPath, item.fsPath)
+      relative(vscode.workspace.workspaceFolders![0].uri.fsPath, item.fsPath)
     );
   }
 
@@ -106,8 +105,7 @@ export class PackageJsonController extends Controller {
 
     if (data.originalVersion.startsWith('^')) {
       const uri = vscode.Uri.joinPath(
-        // @ts-expect-error workspaceFolders has value
-        workspace.workspaceFolders[0].uri,
+        vscode.workspace.workspaceFolders![0].uri,
         data.packageJSON
       );
       const content = await vscode.workspace.fs.readFile(uri);

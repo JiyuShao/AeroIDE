@@ -1,29 +1,18 @@
 <template>
   <EmptyView v-if="packageJSONFiles.length === 0" />
 
-  <div
-    v-if="packageJSONFiles.length !== 0"
-    class="relative grid grid-rows-[auto_1fr_auto] items-start h-screen"
-    @contextmenu.prevent
-  >
+  <div v-if="packageJSONFiles.length !== 0" class="relative grid grid-rows-[auto_1fr_auto] items-start h-screen"
+    @contextmenu.prevent>
     <div>
       <NavBar />
 
-      <div
-        class="grid gap-y-2 px-3"
-        v-if="[View.Manage, View.Analyze].includes(view)"
-      >
-        <VSelect
-          v-if="displayPackageJsonFiles.length > 1"
-          v-model="packageJSON"
-          :options="displayPackageJsonFiles"
-          :format-placeholder="
-            (option) =>
+      <div class="grid gap-y-2 px-3" v-if="[View.Manage, View.Analyze].includes(view)">
+        <VSelect v-if="displayPackageJsonFiles.length > 1" v-model="packageJSON" :options="displayPackageJsonFiles"
+          :format-placeholder="(option) =>
               typeof option === 'string'
                 ? option
                 : option?.value.replace('/package.json', '') || ''
-          "
-        />
+            " />
         <AnalyzeViewHeader v-if="view === View.Analyze" />
         <div class="flex space-x-2">
           <AutocompleteInput v-if="view === View.Manage" />
@@ -33,25 +22,16 @@
     </div>
 
     <div class="content">
-      <ManageViewContent
-        :installed-packages="installedPackages"
-        :displayed-packages="displayedPackages"
-        :installed-packages-tags="installedPackagesTags"
-        :installed-packages-versions="installedPackagesVersions"
-        :size-info="sizeInfo"
-      />
+      <ManageViewContent :installed-packages="installedPackages" :displayed-packages="displayedPackages"
+        :installed-packages-tags="installedPackagesTags" :installed-packages-versions="installedPackagesVersions"
+        :size-info="sizeInfo" />
       <DetailsViewContent />
-      <SupportViewContent v-if="view === View.Support" />
       <AnalyzeViewFooter v-if="view === View.Analyze" :size-info="sizeInfo" />
     </div>
 
     <div>
-      <ManageViewFooter
-        @update-all="handleUpdateAll"
-        :installed-packages="installedPackages"
-        :installed-packages-tags="installedPackagesTags"
-        :installed-packages-versions="installedPackagesVersions"
-      />
+      <ManageViewFooter @update-all="handleUpdateAll" :installed-packages="installedPackages"
+        :installed-packages-tags="installedPackagesTags" :installed-packages-versions="installedPackagesVersions" />
     </div>
   </div>
 </template>
@@ -81,7 +61,6 @@ import ManageViewContent from "./components/manage/ManageViewContent.vue";
 import FilterInput from "./components/FilterInput.vue";
 import { useFuse } from "@vueuse/integrations/useFuse";
 import DetailsViewContent from "./components/DetailsViewContent.vue";
-import SupportViewContent from "./components/support/SupportViewContent.vue";
 
 API.setVSCode(inject<VSCode>("vscode") as VSCode);
 
@@ -168,9 +147,7 @@ const getPackages = async () => {
   store.commit("setInstalledPackages", await API.getInstalledPackages());
 };
 const getPackageJSONFiles = async () => {
-  console.log('### packageJSONFiles request', packageJSONFiles.value)
   packageJSONFiles.value = await API.getPackageJSONFiles();
-  console.log('### packageJSONFiles response', packageJSONFiles.value)
   return packageJSONFiles.value;
 };
 // const runDepCheck = async () => {
@@ -283,12 +260,15 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
 }
+
 .content::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0);
 }
+
 .content::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0);
 }
+
 .content:hover::-webkit-scrollbar-thumb {
   background: var(--vscode-scrollbarSlider-background);
 }

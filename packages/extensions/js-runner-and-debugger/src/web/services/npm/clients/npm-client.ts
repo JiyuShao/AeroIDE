@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { Client } from './client';
 import { injectable } from '../../../utils/webview';
+import { FS_SCHEME } from '../../../config';
 // import { dirname } from '../../../utils/paths';
 
 @injectable()
@@ -23,7 +24,7 @@ export class NpmClient extends Client {
     // return JSON.parse(stdout.toString());
   }
   async getAllPackages() {
-    const uri = vscode.Uri.parse(this.#uri.fsPath);
+    const uri = vscode.Uri.parse(`${FS_SCHEME}:${this.#uri.fsPath}`);
     const content = await vscode.workspace.fs.readFile(uri);
     const json = JSON.parse(new TextDecoder().decode(content));
     const allDependencies = {
