@@ -41,3 +41,4 @@ Yet Another IDE: 基于浏览器的在线代码编辑器
 - [https://github.com/eamodio/vscode-remotehub](https://github.com/eamodio/vscode-remotehub)
 - [https://github.com/SchoofsKelvin/vscode-sshfs](https://github.com/SchoofsKelvin/vscode-sshfs)
 - [https://github.com/microsoft/vscode-anycode](https://github.com/microsoft/vscode-anycode)
+- [https://github.com/codesandbox/codesandbox-client/tree/master/packages/sandpack-core](https://github.com/codesandbox/codesandbox-client/tree/master/packages/sandpack-core)

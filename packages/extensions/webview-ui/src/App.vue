@@ -9,9 +9,9 @@
       <div class="grid gap-y-2 px-3" v-if="[View.Manage, View.Analyze].includes(view)">
         <VSelect v-if="displayPackageJsonFiles.length > 1" v-model="packageJSON" :options="displayPackageJsonFiles"
           :format-placeholder="(option) =>
-              typeof option === 'string'
-                ? option
-                : option?.value.replace('/package.json', '') || ''
+            typeof option === 'string'
+              ? option
+              : option?.value.replace('/package.json', '') || ''
             " />
         <AnalyzeViewHeader v-if="view === View.Analyze" />
         <div class="flex space-x-2">
@@ -219,9 +219,6 @@ window.addEventListener("message", async (message) => {
   if (message.data?.type === "CONFIG_UPDATED") {
     store.dispatch("getConfig");
   }
-  // if (message.data?.type === "UNIMPORTEDRC_UPDATED") {
-  //   runDepCheck();
-  // }
 });
 
 const displayPackageJsonFiles = computed(() => {

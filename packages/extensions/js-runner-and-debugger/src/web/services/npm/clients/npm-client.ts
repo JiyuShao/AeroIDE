@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { Client } from './client';
 import { injectable } from '../../../utils/webview';
 import { FS_SCHEME } from '../../../config';
+import { loadDependencies } from '../../../utils/sandpack-core/npm';
 // import { dirname } from '../../../utils/paths';
 
 @injectable()
@@ -43,7 +44,7 @@ export class NpmClient extends Client {
       return all.concat({ name, version: version as string, isDevDependency });
     }, []);
   }
-  install({ isDev, query }: { isDev?: boolean; query: string }) {
+  async install({ isDev, query }: { isDev?: boolean; query: string }) {
     const args = ['install', ...query.split(' ')];
     if (isDev) {
       args.push('--save-dev');
@@ -55,7 +56,7 @@ export class NpmClient extends Client {
     //   shell: false,
     // });
   }
-  update(_options: { query: string }) {
+  async update(_options: { query: string }) {
     // const args = ['update', ...query.split(' ')];
     // spawn.sync('npm', args, {
     //   stdio: 'inherit',
@@ -64,7 +65,7 @@ export class NpmClient extends Client {
     //   shell: false,
     // });
   }
-  remove(_options: { packages: string[] }) {
+  async remove(_options: { packages: string[] }) {
     // spawn.sync('npm', ['remove', ...packages], {
     //   stdio: 'inherit',
     //   cwd: this.#cwd,
@@ -72,7 +73,11 @@ export class NpmClient extends Client {
     //   shell: false,
     // });
   }
-  swapType(_args: { packageName: string; isDev?: boolean; version?: string }) {
+  async swapType(_args: {
+    packageName: string;
+    isDev?: boolean;
+    version?: string;
+  }) {
     // spawn.sync(
     //   'npm',
     //   [
@@ -89,3 +94,23 @@ export class NpmClient extends Client {
     // );
   }
 }
+
+async function test() {
+  const client = new NpmClient();
+  client.cwdFromUri(vscode.Uri.parse(`${FS_SCHEME}:/package.json`));
+  const dependencies = await client.getAllPackages();
+  const parsedDependencies = dependencies.reduce(
+    (result, current) => {
+      result[current.name] = current.version;
+      return result;
+    },
+    {} as Record<string, any>
+  );
+  // TODO
+  const result = await loadDependencies(parsedDependencies, (...args) => {
+    console.log('### ', args);
+  });
+  console.log(result);
+}
+
+test();
