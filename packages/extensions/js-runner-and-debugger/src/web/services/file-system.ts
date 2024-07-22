@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { MemFS } from '../utils/memfs';
 import { executeCommand, registerCommand } from '../utils/commands';
 import { FS_SCHEME } from '../config';
-import { importFile } from '../utils/file';
+import { importWorkspaceFromZip } from '../utils/file';
 import { logger } from '../utils/logger';
 
 export async function registerFileSystem(context: vscode.ExtensionContext) {
@@ -54,7 +54,8 @@ export async function registerFileSystem(context: vscode.ExtensionContext) {
         return;
       }
       const { uri } = options || {};
-      const finalUri: vscode.Uri | void = uri || (await importFile());
+      const finalUri: vscode.Uri | void =
+        uri || (await importWorkspaceFromZip());
       if (!finalUri) {
         return;
       }

@@ -18,7 +18,6 @@ export interface State {
   updatingPackages: string[];
   sizeInfo: Record<string, PackageSizeInfo>;
   depCheck: DepCheck | null;
-  audit: Audit | null;
   selectedPackage: string | null;
   config: {
     showShortcuts: boolean;
@@ -48,7 +47,6 @@ export const store = createStore<State>({
     packageJSON: null,
     selectedPackage: null,
     packageJSONFiles: [],
-    audit: null,
     config: {
       showShortcuts: true,
       showResultDescription: true,
@@ -67,22 +65,13 @@ export const store = createStore<State>({
     updatingPackages: [],
   },
   getters: {
-    isVulnerable: state => (name: string) =>
-      Object.values(state.audit?.advisories || {}).some(item =>
-        item.findings.some(find =>
-          find.paths.some(path => {
-            const validPath = path.replace(/^\.>/, '');
-            return validPath.startsWith(`${name}>`) || validPath === name;
-          })
-        )
-      ),
     getPackageByName: state => (name: string) =>
       state.installedPackages.find(p => p.name === name),
     hasError: state => (type: ErrorType) => state.errors.has(type),
     getError: state => (type: ErrorType) => state.errors.get(type),
     totalGZIPSize(state) {
       return Object.values(state.sizeInfo).reduce(
-        (total, item) => total + item.gzip,
+        (total, item) => total + (item as Record<string, any>).gzip,
         0
       );
     },
@@ -91,9 +80,6 @@ export const store = createStore<State>({
     },
   },
   mutations: {
-    setAudit(state, audit: Audit | null) {
-      state.audit = audit;
-    },
     setSelectedPackage(state, packageName: string | null) {
       state.selectedPackage = packageName;
     },

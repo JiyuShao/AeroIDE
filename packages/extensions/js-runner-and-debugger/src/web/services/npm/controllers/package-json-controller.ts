@@ -18,11 +18,8 @@ export class PackageJsonController extends Controller {
   }
 
   async getInstalledPackages(data: { packageJSON: string }) {
-    return this.clientManager.getClient(data.packageJSON).getAllPackages();
-  }
-
-  async getSecurityAudit(data: { packageJSON: string }) {
-    return this.clientManager.getClient(data.packageJSON).audit();
+    const client = await this.clientManager.getClient(data.packageJSON);
+    return client.getAllPackages();
   }
 
   async installPackages(data: {
@@ -35,7 +32,8 @@ export class PackageJsonController extends Controller {
         return item.version ? `${item.name}@${item.version}` : item.name;
       })
       .join(' ');
-    this.clientManager.getClient(data.packageJSON).install({
+    const client = await this.clientManager.getClient(data.packageJSON);
+    client.install({
       query,
       isDev: data.dev,
     });
@@ -54,30 +52,16 @@ export class PackageJsonController extends Controller {
         return item.name;
       })
       .join(' ');
-    this.clientManager.getClient(data.packageJSON).update({ query });
+    const client = await this.clientManager.getClient(data.packageJSON);
+    client.update({ query });
     return {};
   }
 
   async removePackage(data: { packages: string[]; packageJSON: string }) {
-    this.clientManager
-      .getClient(data.packageJSON)
-      .remove({ packages: data.packages });
+    const client = await this.clientManager.getClient(data.packageJSON);
+    client.remove({ packages: data.packages });
     return {};
   }
-
-  // async runDepCheck(data: { packageJSON: string }) {
-  //   const path = Uri.joinPath(
-  //     workspace.workspaceFolders[0].uri,
-  //     data.packageJSON
-  //   ).fsPath;
-
-  //   try {
-  //     const result = await depcheck(dirname(path));
-  //     return { status: "success", result };
-  //   } catch (err) {
-  //     return { status: "error" };
-  //   }
-  // }
 
   async swapPackageType(data: {
     name: string;
@@ -85,7 +69,8 @@ export class PackageJsonController extends Controller {
     dev: boolean;
     packageJSON: string;
   }) {
-    this.clientManager.getClient(data.packageJSON).swapType({
+    const client = await this.clientManager.getClient(data.packageJSON);
+    client.swapType({
       packageName: data.name,
       isDev: data.dev,
       version: data.version,
@@ -99,7 +84,8 @@ export class PackageJsonController extends Controller {
     originalVersion: string;
     packageJSON: string;
   }) {
-    this.clientManager.getClient(data.packageJSON).install({
+    const client = await this.clientManager.getClient(data.packageJSON);
+    client.install({
       query: `${data.name}@${data.version}`,
     });
 

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-export async function importFile(): Promise<vscode.Uri | void> {
+export async function importWorkspaceFromZip(): Promise<vscode.Uri | void> {
   const uris = await vscode.window.showOpenDialog({
     canSelectMany: false,
     canSelectFiles: true,
@@ -18,7 +18,7 @@ export async function importFile(): Promise<vscode.Uri | void> {
   return uris[0];
 }
 
-export async function exportFile(
+export async function exportWorkspaceToZip(
   data: Uint8Array,
   defaultFilename: string
 ): Promise<string | void> {
@@ -51,6 +51,21 @@ export async function dirExists(uri: vscode.Uri): Promise<boolean> {
       (await vscode.workspace.fs.stat(uri)).type === vscode.FileType.Directory
     );
   } catch (err) {
+    return false;
+  }
+}
+
+export async function writeFile(
+  uri: vscode.Uri,
+  data: Uint8Array
+): Promise<boolean> {
+  try {
+    if (!dirExists(uri)) {
+      await vscode.workspace.fs.createDirectory(uri);
+    }
+    await vscode.workspace.fs.writeFile(uri, data);
+    return true;
+  } catch (error) {
     return false;
   }
 }

@@ -6,9 +6,11 @@ import { NpmClient } from './npm-client';
 export class ClientManager {
   @inject(NpmClient) npm!: NpmClient;
 
-  getClient(packageJSON: string) {
+  async getClient(packageJSON: string) {
     const uri = Uri.joinPath(workspace.workspaceFolders![0].uri, packageJSON);
     const client = this.npm;
-    return client.cwdFromUri(uri);
+    await client.cwdFromUri(uri);
+    client.init();
+    return client;
   }
 }

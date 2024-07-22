@@ -43,7 +43,7 @@ export class Router {
     const route = this.createRoute(method, uri, action);
     this.routes.push(route);
     if (!this.container.isBound(route.controller)) {
-      this.container.bind(route.controller).toSelf();
+      this.container.bind(route.controller).toSelf().inSingletonScope();
     }
   }
   private createRoute<T extends Controller>(

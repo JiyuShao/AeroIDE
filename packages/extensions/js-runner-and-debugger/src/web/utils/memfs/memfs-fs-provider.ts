@@ -9,7 +9,7 @@ import * as vscode from 'vscode';
 import JSZip from 'jszip';
 import { logger } from '../logger';
 import { FS_SCHEME } from '../../config';
-import { exportFile } from '../file';
+import { exportWorkspaceToZip } from '../file';
 import { IStorage, Storage } from '../storage';
 import { AutoInitClass, autoInit } from '../decorator/auto-init-class';
 import { MemFSSearchProvider } from './memfs-search-provider';
@@ -146,7 +146,8 @@ export class MemFS extends AutoInitClass implements vscode.FileSystemProvider {
           path.basename(uri.path),
           baseFile
         );
-        fileMap[uri.path] = baseFile;
+        const baseFileKey = uri.path.endsWith('/') ? uri.path : `${uri.path}/`;
+        fileMap[baseFileKey] = baseFile;
       } else if (baseFile instanceof File) {
         const currentFolder = fileMap[path.dirpath(uri.path)];
         if (!currentFolder) {
@@ -450,7 +451,7 @@ export class MemFS extends AutoInitClass implements vscode.FileSystemProvider {
     }
     try {
       const content = await rootZip.generateAsync({ type: 'uint8array' });
-      const path = await exportFile(content, 'memfs.zip');
+      const path = await exportWorkspaceToZip(content, 'memfs.zip');
       if (path) {
         vscode.window.showInformationMessage(
           `File saved successfully: ${path}`

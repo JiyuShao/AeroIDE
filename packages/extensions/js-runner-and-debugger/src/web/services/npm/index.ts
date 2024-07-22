@@ -25,7 +25,7 @@ export async function registerNpm(context: vscode.ExtensionContext) {
     .on(WebviewProviderEvents.registered, (webviewView: vscode.WebviewView) => {
       if (vscode.workspace.workspaceFolders) {
         const watcher =
-          vscode.workspace.createFileSystemWatcher('**/package.json');
+          vscode.workspace.createFileSystemWatcher('/package.json');
         const notify = () =>
           webviewView.webview.postMessage({ type: 'PACKAGE_JSON_UPDATED' });
         watcher.onDidChange(notify);

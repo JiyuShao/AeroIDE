@@ -3,26 +3,32 @@ import { Client } from './client';
 import { injectable } from '../../../utils/webview';
 import { FS_SCHEME } from '../../../config';
 import { loadDependencies } from '../../../utils/sandpack-core/npm';
+import { logger } from '../../../utils/logger';
+import { IResponse as Manifest } from '../../../utils/sandpack-core/npm/merge-dependency';
+import { writeFile } from '../../../utils/file';
 // import { dirname } from '../../../utils/paths';
 
 @injectable()
 export class NpmClient extends Client {
   #uri!: vscode.Uri;
-  // #cwd!: string;
+  #projectsState: Record<
+    string,
+    {
+      dependenciesState: Record<
+        string,
+        {
+          status: 'installing' | 'success' | 'failed';
+          manifest?: Omit<Manifest, 'contents'> & {
+            contentUrls: string[];
+          };
+        }
+      >;
+    }
+  > = {};
+
   cwdFromUri(uri: vscode.Uri) {
     this.#uri = uri;
-    // this.#cwd = dirname(uri.fsPath);
     return this;
-  }
-  audit() {
-    return null;
-    // const { stdout } = spawn.sync("npm", ["audit", "--json"], {
-    //   cwd: this.#cwd,
-    //   windowsHide: true,
-    //   shell: false
-    // });
-    // console.log(JSON.parse(stdout.toString()));
-    // return JSON.parse(stdout.toString());
   }
   async getAllPackages() {
     const uri = vscode.Uri.parse(`${FS_SCHEME}:${this.#uri.fsPath}`);
@@ -43,6 +49,67 @@ export class NpmClient extends Client {
       const isDevDependency = devDependencies.includes(name);
       return all.concat({ name, version: version as string, isDevDependency });
     }, []);
+  }
+  async init() {
+    const key = this.#uri.path;
+    if (this.#projectsState[key]) {
+      return;
+    }
+    this.#projectsState[key] = {
+      dependenciesState: {},
+    };
+    const currentProject = this.#projectsState[key];
+
+    const dependencies = await this.getAllPackages();
+    return Promise.all(
+      dependencies.map(async currentPkg => {
+        currentProject.dependenciesState[currentPkg.name] = {
+          status: 'installing',
+        };
+        const currentPkgState =
+          currentProject.dependenciesState[currentPkg.name];
+        try {
+          const result = await loadDependencies(
+            {
+              [currentPkg.name]: currentPkg.version,
+            },
+            _ => {}
+          );
+          if (!result.manifest) {
+            throw new Error('manifest is null');
+          }
+          // save to file system
+          await Promise.all(
+            Object.keys(result.manifest.contents).map(currentFilePath => {
+              const currentFileUri = vscode.Uri.parse(
+                `${FS_SCHEME}:${currentFilePath}`
+              );
+              return writeFile(
+                currentFileUri,
+                new TextEncoder().encode(
+                  result.manifest!.contents[currentFilePath].content
+                )
+              );
+            })
+          );
+
+          // update pkg status
+          currentPkgState.status = 'success';
+          currentPkgState.manifest = {
+            contentUrls: Object.keys(result.manifest.contents),
+            dependencies: result.manifest.dependencies,
+            dependencyAliases: result.manifest.dependencyAliases,
+            dependencyDependencies: result.manifest.dependencyDependencies,
+          };
+        } catch (error) {
+          currentPkgState.status = 'failed';
+          logger.error(
+            `Project ${key} install ${currentPkg.isDevDependency && 'dev '}dependency ${currentPkg.name}@${currentPkg.version} failed`,
+            error
+          );
+        }
+      })
+    );
   }
   async install({ isDev, query }: { isDev?: boolean; query: string }) {
     const args = ['install', ...query.split(' ')];
@@ -66,6 +133,7 @@ export class NpmClient extends Client {
     // });
   }
   async remove(_options: { packages: string[] }) {
+    console.log(_options);
     // spawn.sync('npm', ['remove', ...packages], {
     //   stdio: 'inherit',
     //   cwd: this.#cwd,
@@ -94,23 +162,3 @@ export class NpmClient extends Client {
     // );
   }
 }
-
-async function test() {
-  const client = new NpmClient();
-  client.cwdFromUri(vscode.Uri.parse(`${FS_SCHEME}:/package.json`));
-  const dependencies = await client.getAllPackages();
-  const parsedDependencies = dependencies.reduce(
-    (result, current) => {
-      result[current.name] = current.version;
-      return result;
-    },
-    {} as Record<string, any>
-  );
-  // TODO
-  const result = await loadDependencies(parsedDependencies, (...args) => {
-    console.log('### ', args);
-  });
-  console.log(result);
-}
-
-test();

@@ -81,11 +81,6 @@ export class API {
 
     return promise;
   }
-  static getSecurityAudit() {
-    return API.vscode.fetch.post(`/security-audit`, {
-      packageJSON: API.packageJSON,
-    });
-  }
   static getExportSizes(packageName: string, version: string) {
     return API.request<GetExportSizesResponse>(
       `https://bundlephobia.com/api/exports-sizes?package=${packageName}@${version}`

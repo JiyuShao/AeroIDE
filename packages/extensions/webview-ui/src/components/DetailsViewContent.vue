@@ -8,38 +8,12 @@ import { formatSize, withUpdate } from "../lib/utils";
 import { API } from "../lib/api";
 import coerce from "semver/functions/coerce";
 import VSelect from "./VSelect.vue";
-import { Package } from "../types";
-import groupBy from "just-group-by";
 import minSatisfying from "semver/ranges/min-satisfying";
 
 const store = useStore();
 const pkg = computed(() =>
   store.getters.getPackageByName(store.state.selectedPackage)
 );
-const audit = computed(() => store.state.audit);
-const advisories = computed(() => {
-  const arr = Object.values(audit.value?.advisories || {})
-    .filter((item) => {
-      const finding = item.findings.find((find) => {
-        return find.paths.some((path) => {
-          const validPath = path.replace(/^\.>/, "");
-          return (
-            validPath.startsWith(`${name.value}>`) || validPath === name.value
-          );
-        });
-      });
-      if (!finding) {
-        return false;
-      }
-      item.finding = {
-        version: finding.version,
-        path: finding.paths[0].replace(/^\.>/, ""),
-      };
-      return finding;
-    })
-    .sort((a, b) => a.severity.localeCompare(b.severity));
-  return groupBy(arr, (adv) => adv.severity);
-});
 const name = computed(() => pkg.value?.name);
 const version = computed(() => pkg.value?.version);
 const navigateTo = (view: View) => {
@@ -164,64 +138,6 @@ const handleVersionChange = (nextVersion: string) => {
         placeholder="Select version"
         @update:model-value="handleVersionChange"
       />
-    </div>
-    <div v-if="Object.keys(advisories).length" class="px-3 mt-4">
-      <h2 class="title">Advisories</h2>
-      <div class="grid gap-y-4 mt-2">
-        <div v-for="(items, severity) in advisories" :key="severity">
-          <div
-            class="border-b border-b-[color:var(--vscode-panel-border)] pb-0.5 mb-1 uppercase tracking-wider text-xs font-bold"
-          >
-            {{ severity }}
-          </div>
-          <div class="grid gap-y-3">
-            <div
-              v-for="item in items"
-              :key="item.github_advisory_id"
-              class="grid gap-y-0.5"
-            >
-              <div>
-                <span
-                  class="break-all"
-                  v-for="(name, index) in item.finding.path.split('>')"
-                  :style="{
-                    fontWeight:
-                      index === item.finding.path.split('>').length - 1
-                        ? 600
-                        : 'normal',
-                    opacity:
-                      index === item.finding.path.split('>').length - 1
-                        ? 1
-                        : 0.5,
-                  }"
-                  >{{ name
-                  }}{{
-                    item.finding.path.split(">").length - 1 === index ? "" : ">"
-                  }}</span
-                >
-                <!-- <span class="font-bold">{{ item.module_name }}</span> -->
-                <span class="opacity-50">@{{ item.finding.version }}</span>
-              </div>
-              <a
-                :href="`https://github.com/advisories/${item.github_advisory_id}`"
-              >
-                {{ item.title }}</a
-              >
-              <!-- <div v-if="item.finding.path.split('>').length > 1">
-                <div
-                  v-for="(name, index) in item.finding.path.split('>')"
-                  :style="{ marginLeft: `${index * 0.5}rem` }"
-                >
-                  {{ name }}
-                </div>
-              </div> -->
-              <div class="opacity-60">
-                {{ item.recommendation }}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <div

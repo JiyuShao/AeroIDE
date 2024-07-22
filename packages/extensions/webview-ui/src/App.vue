@@ -132,17 +132,6 @@ const byTypeAndName = (a: Package, b: Package) => {
   }
   return a.name.localeCompare(b.name);
 };
-const getAudit = async () => {
-  try {
-    if (!store.state.config.runAudit) {
-      return;
-    }
-    const audit = await API.getSecurityAudit();
-    store.commit("setAudit", audit);
-  } catch (err) {
-    store.commit("setAudit", null);
-  }
-};
 const getPackages = async () => {
   store.commit("setInstalledPackages", await API.getInstalledPackages());
 };
@@ -150,14 +139,6 @@ const getPackageJSONFiles = async () => {
   packageJSONFiles.value = await API.getPackageJSONFiles();
   return packageJSONFiles.value;
 };
-// const runDepCheck = async () => {
-//   const { status, result } = await API.getDepCheck();
-//   if (status === "success") {
-//     store.commit("setDepCheck", result);
-//   } else {
-//     store.commit("setDepCheck", null);
-//   }
-// };
 const loadPackagesSizeInfo = async () => {
   store.commit("setSizeInfo", {});
   for (const item of displayedPackages.value) {
@@ -184,14 +165,10 @@ watch(packageJSON, (value) => {
   if (value) {
     API.setPackageJSON(packageJSON.value);
     getPackages();
-    getAudit();
   }
 });
 
 watch(installedPackages, async (packages) => {
-  // runDepCheck();
-  // installedPackagesVersions.value = {};
-  // installedPackagesTags.value = {};
   for (const item of packages) {
     if (installedPackagesVersions.value[item.name]) continue
     const ver = coerce(item.version)?.raw;
@@ -214,7 +191,6 @@ window.addEventListener("message", async (message) => {
   if (message.data?.type === "PACKAGE_JSON_UPDATED") {
     getPackageJSONFiles();
     getPackages();
-    getAudit();
   }
   if (message.data?.type === "CONFIG_UPDATED") {
     store.dispatch("getConfig");

@@ -129,7 +129,6 @@ importers:
       algoliasearch: ^4.23.3
       autoprefixer: ^10.4.19
       fuse.js: ^7.0.0
-      just-group-by: ^2.2.0
       postcss: ^8.4.39
       semver: ^7.6.2
       tailwindcss: ^3.4.4
@@ -156,7 +155,6 @@ importers:
       algoliasearch: 4.23.3
       autoprefixer: 10.4.19_postcss@8.4.39
       fuse.js: 7.0.0
-      just-group-by: 2.2.0
       postcss: 8.4.39
       semver: 7.6.2
       tailwindcss: 3.4.4
@@ -4268,10 +4266,6 @@ packages:
       pako: 1.0.11
       readable-stream: 2.3.8
       setimmediate: 1.0.5
-    dev: true
-
-  /just-group-by/2.2.0:
-    resolution: {integrity: sha512-brZocDSmkvDYc+FOr07GiTar4cp7K6OB9huVOrj5LX+iXfCe3hTvn2KGM811LE/SBQkCzuYDDEcG8HA/dKDrnw==}
     dev: true
 
   /keygrip/1.1.0:

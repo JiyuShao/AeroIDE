@@ -11,7 +11,7 @@ export abstract class Client {
       isDevDependency: boolean;
     }[]
   >;
-  abstract audit(): any;
+  abstract init(): void;
   abstract install(args: { query: string; isDev?: boolean }): void;
   abstract update(args: { query: string }): void;
   abstract remove(args: { packages: string[] }): void;

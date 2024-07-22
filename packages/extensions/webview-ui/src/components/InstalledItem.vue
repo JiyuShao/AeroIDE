@@ -9,7 +9,7 @@ import { Package, PackageSizeInfo } from "../types";
 import Stat from "./Stat.vue";
 import { View } from "../enums";
 import { useStore } from "../lib/store";
-import BugIcon from "./BugIcon.vue";
+// import BugIcon from "./BugIcon.vue";
 import UpdateIcon from "./UpdateIcon.vue";
 import DoubleArrowIcon from "./DoubleArrowIcon.vue";
 import RemoveIcon from "./RemoveIcon.vue";
@@ -138,9 +138,6 @@ const handleDelete = (event: KeyboardEvent) => {
   if (!next) prev?.focus();
   emit("remove", props.item);
 };
-const isVulnerable = computed(() => {
-  return store.getters.isVulnerable(props.item.name);
-});
 const viewDetails = () => {
   store.commit("navigate", View.Details);
   store.commit("setSelectedPackage", props.item.name);
@@ -152,8 +149,6 @@ const viewDetails = () => {
     class="item relative focus:z-50 focus:outline-1 focus:outline focus:outline-[color:var(--vscode-focusBorder)]"
     :class="{
       'item--analyze': view === View.Analyze,
-      'bg-[color:var(--vscode-errorLens-errorBackground)] text-[color:var(--vscode-errorForeground)]':
-        isVulnerable,
     }"
     tabindex="0"
     @keydown.up.exact="focusPrev"
@@ -174,7 +169,6 @@ const viewDetails = () => {
       }"
     >
       <Loader class="icon" v-if="isUpdating" />
-      <BugIcon class="flex-shrink-0" v-else-if="isVulnerable" />
       <!-- <img
         v-else
         class="icon"
