@@ -1,10 +1,12 @@
 # AeroIDE
 
-Yet Another IDE: 基于浏览器的在线代码编辑器
+Yet Another IDE: 基于浏览器的在线代码编辑器，欢迎各位大佬来交流鸭
 
 ## Features
 
 ![IDE Intro](./assets/ide-intro.png)
+![NPM Intro1](./assets/npm-intro1.png)
+![NPM Intro2](./assets/npm-intro2.png)
 
 - [x] 虚拟工作区
   - [x] 浏览器内虚拟文件系统
@@ -32,6 +34,15 @@ Yet Another IDE: 基于浏览器的在线代码编辑器
 ## License
 
 此项目遵循 [MIT 开源协议](./LICENSE)
+
+**本项目参考的开源项目如下:**
+
+- Apache License 2.0：详见 [LICENSE-APACHE]('./LICENSE-APACHE')
+
+  - js-runner-and-debugger/utils/sandpack-core: [sandpack-core](https://github.com/codesandbox/codesandbox-client/tree/master/packages/sandpack-core)
+
+- 其他：
+  - js-runner-and-debugger/services/npm 和 webview-ui：[iridium](https://github.com/Idered/iridium)
 
 ## Thanks
 

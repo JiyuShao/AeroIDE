@@ -2,9 +2,8 @@ import * as vscode from 'vscode';
 import { Client } from './client';
 import { injectable } from '../../../utils/webview';
 import { FS_SCHEME } from '../../../config';
-import { loadDependencies } from '../../../utils/sandpack-core/npm';
+import { loadDependencies, Manifest } from '../../../utils/sandpack-core';
 import { logger } from '../../../utils/logger';
-import { IResponse as Manifest } from '../../../utils/sandpack-core/npm/merge-dependency';
 import { writeFile } from '../../../utils/file';
 // import { dirname } from '../../../utils/paths';
 

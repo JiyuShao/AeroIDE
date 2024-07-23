@@ -1,3 +1,23 @@
+/**
+ * Copyright 2024 Jiyu Shao
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Modifications:
+ * - remove codesandbox-api dispatch/actions logic
+ * - remove sandpack-secret logic
+ * - remove auto add node-libs-browser depentency logic
+ */
 import { pickBy } from 'lodash-es';
 import {
   preloadedProtocols,
@@ -78,6 +98,7 @@ export type UpdateProgressFunc = (progress: {
   done: number;
   total: number;
   remainingDependencies: string[];
+  dependencyName: string;
 }) => void;
 
 export async function getDependenciesFromSources(
@@ -103,7 +124,7 @@ export async function getDependenciesFromSources(
       forceFetchDynamically
     );
 
-    const updateLoadScreen = () => {
+    const updateLoadScreen = (depName: string) => {
       const progress = totalDependencies - remainingDependencies.length;
       const total = totalDependencies;
 
@@ -111,6 +132,7 @@ export async function getDependenciesFromSources(
         done: progress,
         total,
         remainingDependencies,
+        dependencyName: depName,
       });
     };
 
@@ -125,7 +147,7 @@ export async function getDependenciesFromSources(
             remainingDependencies.indexOf(depName),
             1
           );
-          updateLoadScreen();
+          updateLoadScreen(depName);
         })
       )
     );
@@ -153,7 +175,7 @@ export async function getDependenciesFromSources(
               remainingDependencies.indexOf(depName),
               1
             );
-            updateLoadScreen();
+            updateLoadScreen(depName);
           })
       )
     );
