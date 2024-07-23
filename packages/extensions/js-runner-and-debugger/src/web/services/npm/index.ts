@@ -6,7 +6,6 @@ import routes from './routes';
 import { ClientManager } from './clients/client-manager';
 import { NpmClient } from './clients/npm-client';
 import { WebviewProviderEvents } from '../../utils/webview/webview/webview-provider';
-import { AddDependencyCommand } from './commands/add-dependency-command';
 
 export async function registerNpm(context: vscode.ExtensionContext) {
   const app = bootstrap({
@@ -17,8 +16,6 @@ export async function registerNpm(context: vscode.ExtensionContext) {
 
   app.bind(NpmClient).toSelf();
   app.bind(ClientManager).toSelf();
-  app.bind(AddDependencyCommand).toSelf();
-  app.resolve(AddDependencyCommand);
 
   app
     .get(Bus)

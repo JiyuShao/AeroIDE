@@ -13,7 +13,7 @@
     @remove="handleRemovePackage"
     @swapType="handleSwapType"
   />
-  <h2 class="title" v-if="[View.Manage].includes(view)">Dev Dependencies</h2>
+  <!-- <h2 class="title" v-if="[View.Manage].includes(view)">Dev Dependencies</h2>
   <InstalledItem
     v-if="[View.Manage].includes(view)"
     v-for="item in displayedPackages.filter((item) => item.isDevDependency)"
@@ -26,7 +26,7 @@
     @changeVersion="handleChangeVersion"
     @remove="handleRemovePackage"
     @swapType="handleSwapType"
-  />
+  /> -->
 </template>
 
 <script setup lang="ts">

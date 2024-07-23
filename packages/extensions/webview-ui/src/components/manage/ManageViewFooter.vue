@@ -41,7 +41,7 @@
         {{ dependencyCount }}
       </a>
     </div>
-    <div class="footer__item">
+    <!-- <div class="footer__item">
       <a
         class="footer__item-link"
         role="button"
@@ -65,7 +65,7 @@
         </svg>
         {{ devDependencyCount }}
       </a>
-    </div>
+    </div> -->
     <div class="footer__item">
       <a
         @click="showUpdateConfirmation"

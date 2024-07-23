@@ -101,8 +101,8 @@ export interface RunWasiCommandOptions {
 }
 
 const WASI_COMMAND_MAPPING: Record<string, string> = {
-  coreutils: 'assets/coreutils/coreutils.async.wasm',
-  esbuild: 'assets/esbuild-wasm-wasi/esbuild.wasm',
+  coreutils: 'assets/wasm/coreutils/coreutils.async.wasm',
+  esbuild: 'assets/wasm/esbuild-wasm-wasi/esbuild.wasm',
 };
 type MockCommandFunction = (
   wasiEnv: WasiEnv,

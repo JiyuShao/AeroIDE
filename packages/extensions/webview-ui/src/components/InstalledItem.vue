@@ -11,7 +11,7 @@ import { View } from "../enums";
 import { useStore } from "../lib/store";
 // import BugIcon from "./BugIcon.vue";
 import UpdateIcon from "./UpdateIcon.vue";
-import DoubleArrowIcon from "./DoubleArrowIcon.vue";
+// import DoubleArrowIcon from "./DoubleArrowIcon.vue";
 import RemoveIcon from "./RemoveIcon.vue";
 import EnterIcon from "./EnterIcon.vue";
 
@@ -97,9 +97,9 @@ const displayVersion = computed(() => {
   }
   return props.item.version;
 });
-const swapPackageType = () => {
-  emit("swapType", props.item);
-};
+// const swapPackageType = () => {
+//   emit("swapType", props.item);
+// };
 const maxSatisfyingVersion = computed(() => {
   return maxSatisfying(props.versions, props.item.version);
 });
@@ -142,6 +142,8 @@ const viewDetails = () => {
   store.commit("navigate", View.Details);
   store.commit("setSelectedPackage", props.item.name);
 };
+
+console.log('###', store.state.view === View.Analyze, props.sizeInfo)
 </script>
 
 <template>
@@ -242,7 +244,7 @@ const viewDetails = () => {
             <EnterIcon />
           </a>
 
-          <a
+          <!-- <a
             role="button"
             tabindex="0"
             class="action"
@@ -252,7 +254,7 @@ const viewDetails = () => {
             @keydown.enter="swapPackageType"
           >
             <DoubleArrowIcon />
-          </a>
+          </a> -->
 
           <a
             role="button"

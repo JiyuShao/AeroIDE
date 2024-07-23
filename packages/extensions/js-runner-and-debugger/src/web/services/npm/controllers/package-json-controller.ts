@@ -63,20 +63,20 @@ export class PackageJsonController extends Controller {
     return {};
   }
 
-  async swapPackageType(data: {
-    name: string;
-    version: string;
-    dev: boolean;
-    packageJSON: string;
-  }) {
-    const client = await this.clientManager.getClient(data.packageJSON);
-    client.swapType({
-      packageName: data.name,
-      isDev: data.dev,
-      version: data.version,
-    });
-    return {};
-  }
+  // async swapPackageType(data: {
+  //   name: string;
+  //   version: string;
+  //   dev: boolean;
+  //   packageJSON: string;
+  // }) {
+  //   const client = await this.clientManager.getClient(data.packageJSON);
+  //   client.swapType({
+  //     packageName: data.name,
+  //     isDev: data.dev,
+  //     version: data.version,
+  //   });
+  //   return {};
+  // }
 
   async changeVersion(data: {
     name: string;

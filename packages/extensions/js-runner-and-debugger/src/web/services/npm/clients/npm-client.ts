@@ -14,6 +14,7 @@ export class NpmClient extends Client {
   #projectsState: Record<
     string,
     {
+      status: 'installing' | 'success' | 'failed';
       dependenciesState: Record<
         string,
         {
@@ -52,17 +53,22 @@ export class NpmClient extends Client {
   }
   async init() {
     const key = this.#uri.path;
-    if (this.#projectsState[key]) {
+    if (
+      this.#projectsState[key] &&
+      this.#projectsState[key].status === 'installing'
+    ) {
       return;
     }
     this.#projectsState[key] = {
+      status: 'installing',
       dependenciesState: {},
     };
     const currentProject = this.#projectsState[key];
 
     const dependencies = await this.getAllPackages();
-    return Promise.all(
-      dependencies.map(async currentPkg => {
+    try {
+      for (let i = 0; i < dependencies.length; i++) {
+        const currentPkg = dependencies[i];
         currentProject.dependenciesState[currentPkg.name] = {
           status: 'installing',
         };
@@ -107,9 +113,13 @@ export class NpmClient extends Client {
             `Project ${key} install ${currentPkg.isDevDependency && 'dev '}dependency ${currentPkg.name}@${currentPkg.version} failed`,
             error
           );
+          throw error;
         }
-      })
-    );
+      }
+      currentProject.status = 'success';
+    } catch (_error) {
+      currentProject.status = 'failed';
+    }
   }
   async install({ isDev, query }: { isDev?: boolean; query: string }) {
     const args = ['install', ...query.split(' ')];

@@ -141,19 +141,34 @@ export class MemFS extends AutoInitClass implements vscode.FileSystemProvider {
       const rawData = await this._storage.get(key);
       const uri = this._convertFileKeyToUri(key);
       const baseFile = BaseFile.fromUnit8Array(rawData);
-      if (baseFile instanceof Directory && !fileMap[uri.path]) {
+      if (baseFile instanceof Directory) {
+        const baseFolderKey = uri.path.endsWith('/')
+          ? uri.path
+          : `${uri.path}/`;
+        // ingnore root folder
+        if (fileMap[baseFolderKey]) {
+          continue;
+        }
+
+        // add folder
+        if (!fileMap[path.dirpath(uri.path)]) {
+          logger.error(
+            `Load from storage failed: ${path.dirpath(uri.path)} not found`
+          );
+          continue;
+        }
         fileMap[path.dirpath(uri.path)].entries.set(
           path.basename(uri.path),
           baseFile
         );
-        const baseFileKey = uri.path.endsWith('/') ? uri.path : `${uri.path}/`;
-        fileMap[baseFileKey] = baseFile;
+        fileMap[baseFolderKey] = baseFile;
       } else if (baseFile instanceof File) {
         const currentFolder = fileMap[path.dirpath(uri.path)];
         if (!currentFolder) {
-          throw new Error(
+          logger.error(
             `Load from storage failed: ${path.dirpath(uri.path)} not found`
           );
+          continue;
         }
         currentFolder.entries.set(path.basename(uri.path), baseFile);
       }
