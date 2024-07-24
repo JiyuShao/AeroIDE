@@ -3,9 +3,22 @@ import { Controller } from '../../../utils/webview/routing/controller';
 import { inject } from '../../../utils/webview';
 import { ClientManager } from '../clients/client-manager';
 import { relative } from '../../../utils/paths';
+import { logger } from '../../../utils/logger';
 
 export class PackageJsonController extends Controller {
   @inject(ClientManager) private clientManager!: ClientManager;
+  constructor() {
+    super();
+
+    this.getPackageJSONFiles().then(([packageJsonFile]) => {
+      if (!packageJsonFile) {
+        logger.error('PackageJsonController packageJsonFile not found');
+        return;
+      }
+      // get client and run init logic
+      this.clientManager.getClient(packageJsonFile);
+    });
+  }
 
   async getPackageJSONFiles() {
     const packages = await vscode.workspace.findFiles(

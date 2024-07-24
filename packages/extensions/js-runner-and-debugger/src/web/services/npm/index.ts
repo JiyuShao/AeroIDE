@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import 'reflect-metadata';
-import { bootstrap } from '../../utils/webview/app/bootstrap';
+import { bootstrap as webviewBootstrap } from '../../utils/webview/app/bootstrap';
 import { Bus } from '../../utils/webview/bus/bus';
 import routes from './routes';
 import { ClientManager } from './clients/client-manager';
@@ -8,14 +8,15 @@ import { NpmClient } from './clients/npm-client';
 import { WebviewProviderEvents } from '../../utils/webview/webview/webview-provider';
 
 export async function registerNpm(context: vscode.ExtensionContext) {
-  const app = bootstrap({
+  const app = webviewBootstrap({
     context,
-    routes,
     viewId: 'js-runner-and-debugger.npm',
+    initCallback: app => {
+      app.bind(NpmClient).toSelf();
+      app.bind(ClientManager).toSelf();
+      routes(app);
+    },
   });
-
-  app.bind(NpmClient).toSelf();
-  app.bind(ClientManager).toSelf();
 
   app
     .get(Bus)

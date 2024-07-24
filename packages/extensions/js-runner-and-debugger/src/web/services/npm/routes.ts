@@ -1,8 +1,10 @@
+import { Container } from 'inversify';
 import { Router } from '../../utils/webview/routing/router';
 import { PackageJsonController } from './controllers/package-json-controller';
 import { ConfigController } from './controllers/config-controller';
 
-export default (router: Router) => {
+export default (app: Container) => {
+  const router = app.get(Router);
   router.get('/package-json-files', [
     PackageJsonController,
     'getPackageJSONFiles',

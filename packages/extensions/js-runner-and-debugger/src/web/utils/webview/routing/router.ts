@@ -4,7 +4,6 @@ import { Route } from './route';
 import { RouteAction, RouteRequest } from './types';
 import { VSCodeContext } from '../app/vs-code-context';
 import { Controller } from './controller';
-import { container } from 'inversify-props';
 
 @injectable()
 export class Router {
@@ -44,6 +43,8 @@ export class Router {
     this.routes.push(route);
     if (!this.container.isBound(route.controller)) {
       this.container.bind(route.controller).toSelf().inSingletonScope();
+      // pre init controller
+      this.container.get(route.controller);
     }
   }
   private createRoute<T extends Controller>(
@@ -88,8 +89,6 @@ export class Router {
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const params = this.provideParams(route, request);
     const controller = this.container.get<any>(route.controller);
     const result = await controller[route.action](request.payload);
 
@@ -101,17 +100,5 @@ export class Router {
         payload: result,
       });
     }
-  }
-
-  private provideParams(route: Route, request: RouteRequest) {
-    const params = route.getParameters(request);
-    const paramsArr = Object.values(params);
-    if (container.isBound('Params')) {
-      container.unbind('Params');
-    }
-    container.addRequest(function () {
-      return params;
-    }, 'Params');
-    return paramsArr;
   }
 }

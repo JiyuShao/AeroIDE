@@ -143,7 +143,6 @@ const viewDetails = () => {
   store.commit("setSelectedPackage", props.item.name);
 };
 
-console.log('###', store.state.view === View.Analyze, props.sizeInfo)
 </script>
 
 <template>

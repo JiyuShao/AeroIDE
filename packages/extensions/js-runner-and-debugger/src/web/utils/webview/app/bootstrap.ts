@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { Container } from 'inversify';
 import { Bus } from '../bus/bus';
 import { Router } from '../routing/router';
 import {
@@ -12,15 +13,18 @@ import { VSCodeWebView } from './vs-code-webview';
 export function bootstrap(props: {
   viewId: string | string[];
   context: vscode.ExtensionContext;
-  routes: (router: Router) => void;
+  initCallback: (app: Container) => void;
 }) {
-  const { routes, context, viewId } = props;
+  const { context, viewId, initCallback } = props;
 
   app.bind('app').toConstantValue(app);
   app.bind(VSCodeContext).toConstantValue(context);
   app.bind(Bus).toConstantValue(new Bus());
   app.bind(Router).toSelf().inSingletonScope();
   app.bind(WebviewProvider).toSelf().inSingletonScope();
+
+  // run init callback
+  initCallback(app);
 
   // Watch for webview registration event
   app
@@ -29,7 +33,6 @@ export function bootstrap(props: {
       // Attach router to webview
       app.get(Router).registerWebview(webviewView);
       app.bind(VSCodeWebView).toConstantValue(webviewView.webview);
-      routes(app.get(Router));
     });
 
   // Init webview loading
