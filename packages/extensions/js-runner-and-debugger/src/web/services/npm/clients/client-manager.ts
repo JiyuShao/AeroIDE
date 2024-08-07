@@ -10,7 +10,6 @@ export class ClientManager {
     const uri = Uri.joinPath(workspace.workspaceFolders![0].uri, packageJSON);
     const client = this.npm;
     await client.cwdFromUri(uri);
-    client.init();
     return client;
   }
 }

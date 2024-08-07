@@ -12,12 +12,10 @@ export abstract class Client {
     }[]
   >;
   abstract init(): void;
-  abstract install(args: { query: string; isDev?: boolean }): void;
+  abstract install(args: {
+    packages: { name: string; version?: string }[];
+    isDev?: boolean;
+  }): void;
   abstract update(args: { query: string }): void;
   abstract remove(args: { packages: string[] }): void;
-  abstract swapType(args: {
-    packageName: string;
-    isDev?: boolean;
-    version?: string;
-  }): void;
 }

@@ -16,8 +16,7 @@ export default (app: Container) => {
   // router.post("/depcheck", [PackageJsonController, "runDepCheck"]);
   router.post('/installed', [PackageJsonController, 'getInstalledPackages']);
   router.post('/install', [PackageJsonController, 'installPackages']);
-  router.post('/remove', [PackageJsonController, 'removePackage']);
-  // router.post('/swap', [PackageJsonController, 'swapPackageType']);
+  router.post('/remove', [PackageJsonController, 'removePackages']);
   router.post('/change-version', [PackageJsonController, 'changeVersion']);
   router.post('/update', [PackageJsonController, 'updatePackages']);
   router.get('/config', [ConfigController, 'getConfig']);

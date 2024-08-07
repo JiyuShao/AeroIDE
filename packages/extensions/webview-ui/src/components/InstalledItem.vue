@@ -15,7 +15,7 @@ import UpdateIcon from "./UpdateIcon.vue";
 import RemoveIcon from "./RemoveIcon.vue";
 import EnterIcon from "./EnterIcon.vue";
 
-const emit = defineEmits(["remove", "changeVersion", "swapType", "update"]);
+const emit = defineEmits(["remove", "changeVersion", "update"]);
 
 const props = defineProps({
   sizeInfo: {
@@ -97,9 +97,6 @@ const displayVersion = computed(() => {
   }
   return props.item.version;
 });
-// const swapPackageType = () => {
-//   emit("swapType", props.item);
-// };
 const maxSatisfyingVersion = computed(() => {
   return maxSatisfying(props.versions, props.item.version);
 });
@@ -242,18 +239,6 @@ const viewDetails = () => {
           >
             <EnterIcon />
           </a>
-
-          <!-- <a
-            role="button"
-            tabindex="0"
-            class="action"
-            title="Change dependency type"
-            @click="swapPackageType"
-            @keydown.space="swapPackageType"
-            @keydown.enter="swapPackageType"
-          >
-            <DoubleArrowIcon />
-          </a> -->
 
           <a
             role="button"

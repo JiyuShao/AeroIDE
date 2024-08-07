@@ -122,16 +122,6 @@ export class API {
       packageJSON: API.packageJSON,
     });
   }
-  static swapPackageType(args: {
-    name: string;
-    dev: boolean;
-    version: string;
-  }) {
-    return API.vscode.fetch.post<string[]>('/swap', {
-      ...args,
-      packageJSON: API.packageJSON,
-    });
-  }
   static changeVersion(args: {
     name: string;
     version: string;

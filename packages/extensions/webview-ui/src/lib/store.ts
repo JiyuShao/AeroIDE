@@ -157,13 +157,6 @@ export const store = createStore<State>({
         item => !packages.includes(item.name)
       );
     },
-    swapPackageType(state, item: Package) {
-      const index = state.installedPackages.indexOf(item);
-      state.installedPackages.splice(index, 1, {
-        ...item,
-        isDevDependency: !item.isDevDependency,
-      });
-    },
     changeVersion(state, change: { item: Package; version: string }) {
       const index = state.installedPackages.indexOf(change.item);
       state.installedPackages.splice(index, 1, {

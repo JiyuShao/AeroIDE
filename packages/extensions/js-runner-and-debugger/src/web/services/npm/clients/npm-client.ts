@@ -18,6 +18,7 @@ export class NpmClient extends Client {
         string,
         {
           status: 'installing' | 'success' | 'failed';
+          version: string;
           manifest?: Omit<Manifest, 'contents'> & {
             contentUrls: string[];
           };
@@ -52,12 +53,15 @@ export class NpmClient extends Client {
   }
   async init() {
     const key = this.#uri.path;
-    if (
-      this.#projectsState[key] &&
-      this.#projectsState[key].status === 'installing'
-    ) {
-      return;
+    if (this.#projectsState[key]) {
+      if (this.#projectsState[key].status === 'installing') {
+        return;
+      } else if (this.#projectsState[key].status === 'success') {
+        // TODO
+        return;
+      }
     }
+
     this.#projectsState[key] = {
       status: 'installing',
       dependenciesState: {},
@@ -66,71 +70,95 @@ export class NpmClient extends Client {
 
     const dependencies = await this.getAllPackages();
     try {
-      for (let i = 0; i < dependencies.length; i++) {
-        const currentPkg = dependencies[i];
-        currentProject.dependenciesState[currentPkg.name] = {
-          status: 'installing',
-        };
-        const currentPkgState =
-          currentProject.dependenciesState[currentPkg.name];
-        try {
-          const result = await loadDependencies(
-            {
-              [currentPkg.name]: currentPkg.version,
-            },
-            _ => {}
-          );
-          if (!result.manifest) {
-            throw new Error('manifest is null');
-          }
-          // save to file system
-          await Promise.all(
-            Object.keys(result.manifest.contents).map(currentFilePath => {
-              const currentFileUri = vscode.Uri.parse(
-                `${FS_SCHEME}:${currentFilePath}`
-              );
-              return writeFile(
-                currentFileUri,
-                new TextEncoder().encode(
-                  result.manifest!.contents[currentFilePath].content
-                )
-              );
-            })
-          );
-
-          // update pkg status
-          currentPkgState.status = 'success';
-          currentPkgState.manifest = {
-            contentUrls: Object.keys(result.manifest.contents),
-            dependencies: result.manifest.dependencies,
-            dependencyAliases: result.manifest.dependencyAliases,
-            dependencyDependencies: result.manifest.dependencyDependencies,
-          };
-        } catch (error) {
-          currentPkgState.status = 'failed';
-          logger.error(
-            `Project ${key} install ${currentPkg.isDevDependency && 'dev '}dependency ${currentPkg.name}@${currentPkg.version} failed`,
-            error
-          );
-          throw error;
-        }
-      }
+      await this.install({ packages: dependencies });
       currentProject.status = 'success';
     } catch (_error) {
       currentProject.status = 'failed';
     }
   }
-  async install({ isDev, query }: { isDev?: boolean; query: string }) {
-    const args = ['install', ...query.split(' ')];
-    if (isDev) {
-      args.push('--save-dev');
+  async install(options: {
+    packages: { name: string; version: string }[];
+    isDev?: boolean;
+  }) {
+    const key = this.#uri.path;
+    if (!this.#projectsState[key]) {
+      return;
     }
-    // spawn.sync('npm', args, {
-    //   stdio: 'inherit',
-    //   cwd: this.#cwd,
-    //   windowsHide: true,
-    //   shell: false,
-    // });
+    const currentProject = this.#projectsState[key];
+
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+      },
+      async (progress, token) => {
+        // The total number of steps, if known.
+        const totalSteps = options.packages.length;
+
+        for (const [currentIndex, currentPkg] of options.packages.entries()) {
+          // Update the progress bar
+          progress.report({
+            increment: currentIndex,
+            message: `Installing ${options.isDev ? 'dev ' : ''}dependency ${currentPkg.name}@${currentPkg.version}`,
+          });
+
+          currentProject.dependenciesState[currentPkg.name] = {
+            status: 'installing',
+            version: currentPkg.version,
+          };
+          const currentPkgState =
+            currentProject.dependenciesState[currentPkg.name];
+          try {
+            const result = await loadDependencies(
+              {
+                [currentPkg.name]: currentPkg.version,
+              },
+              _ => {}
+            );
+            if (!result.manifest) {
+              throw new Error('manifest is null');
+            }
+            // save to file system
+            await Promise.all(
+              Object.keys(result.manifest.contents).map(currentFilePath => {
+                const currentFileUri = vscode.Uri.parse(
+                  `${FS_SCHEME}:${currentFilePath}`
+                );
+                return writeFile(
+                  currentFileUri,
+                  new TextEncoder().encode(
+                    result.manifest!.contents[currentFilePath].content
+                  )
+                );
+              })
+            );
+
+            // update pkg status
+            currentPkgState.status = 'success';
+            currentPkgState.manifest = {
+              contentUrls: Object.keys(result.manifest.contents),
+              dependencies: result.manifest.dependencies,
+              dependencyAliases: result.manifest.dependencyAliases,
+              dependencyDependencies: result.manifest.dependencyDependencies,
+            };
+            // Check if the user canceled the operation
+            if (token.isCancellationRequested) {
+              break;
+            }
+          } catch (error) {
+            currentPkgState.status = 'failed';
+            logger.error(
+              `Install ${options.isDev ? 'dev ' : ''}dependency ${currentPkg.name}@${currentPkg.version} failed`,
+              error
+            );
+            throw error;
+          }
+        }
+        this.updatePackageJSON();
+        progress.report({
+          increment: totalSteps,
+        });
+      }
+    );
   }
   async update(_options: { query: string }) {
     // const args = ['update', ...query.split(' ')];
@@ -140,6 +168,7 @@ export class NpmClient extends Client {
     //   windowsHide: true,
     //   shell: false,
     // });
+    this.updatePackageJSON();
   }
   async remove(_options: { packages: string[] }) {
     console.log(_options);
@@ -149,25 +178,31 @@ export class NpmClient extends Client {
     //   windowsHide: true,
     //   shell: false,
     // });
+    this.updatePackageJSON();
   }
-  async swapType(_args: {
-    packageName: string;
-    isDev?: boolean;
-    version?: string;
-  }) {
-    // spawn.sync(
-    //   'npm',
-    //   [
-    //     'install',
-    //     `${args.packageName}@${args.version}`,
-    //     args.isDev ? '--save-prod' : '--save-dev',
-    //   ],
-    //   {
-    //     stdio: 'inherit',
-    //     cwd: this.#cwd,
-    //     windowsHide: true,
-    //     shell: false,
-    //   }
-    // );
+  private async updatePackageJSON() {
+    const key = this.#uri.path;
+    if (!this.#projectsState[key]) {
+      return;
+    }
+    const currentProject = this.#projectsState[key];
+    const packageJsonUri = vscode.Uri.parse(`${FS_SCHEME}:${key}`);
+    const packageJsonRaw = await vscode.workspace.fs.readFile(
+      vscode.Uri.parse(`${FS_SCHEME}:${key}`)
+    );
+    const packageJson = JSON.parse(new TextDecoder().decode(packageJsonRaw));
+    packageJson.dependencies = Object.keys(
+      currentProject.dependenciesState
+    ).reduce((final, currentPkgName) => {
+      return {
+        ...final,
+        [currentPkgName]:
+          currentProject.dependenciesState[currentPkgName].version,
+      };
+    }, {});
+    await vscode.workspace.fs.writeFile(
+      packageJsonUri,
+      new TextEncoder().encode(JSON.stringify(packageJson, null, 4))
+    );
   }
 }

@@ -11,7 +11,6 @@
     @update="handleChangeVersion"
     @changeVersion="handleChangeVersion"
     @remove="handleRemovePackage"
-    @swapType="handleSwapType"
   />
   <!-- <h2 class="title" v-if="[View.Manage].includes(view)">Dev Dependencies</h2>
   <InstalledItem
@@ -25,7 +24,6 @@
     @update="handleChangeVersion"
     @changeVersion="handleChangeVersion"
     @remove="handleRemovePackage"
-    @swapType="handleSwapType"
   /> -->
 </template>
 
@@ -81,16 +79,6 @@ const handleRemovePackage = async (pkg: Package) => {
   withUpdate(packagesToRemove, async () => {
     await API.removePackages(packagesToRemove);
     store.commit("removePackages", packagesToRemove);
-  });
-};
-const handleSwapType = async (item: Package) => {
-  withUpdate(item.name, async () => {
-    await API.swapPackageType({
-      name: item.name,
-      dev: item.isDevDependency,
-      version: item.version,
-    });
-    store.commit("swapPackageType", item);
   });
 };
 const handleChangeVersion = (change: { item: Package; version: string }) => {

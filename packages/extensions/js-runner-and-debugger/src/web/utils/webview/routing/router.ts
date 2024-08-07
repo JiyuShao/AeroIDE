@@ -43,8 +43,6 @@ export class Router {
     this.routes.push(route);
     if (!this.container.isBound(route.controller)) {
       this.container.bind(route.controller).toSelf().inSingletonScope();
-      // pre init controller
-      this.container.get(route.controller);
     }
   }
   private createRoute<T extends Controller>(
