@@ -3,14 +3,6 @@ export function dirname(originalPath: string) {
   return path.substring(0, path.lastIndexOf('/')) || '/';
 }
 
-export function dirpath(originalPath: string) {
-  let path = dirname(originalPath);
-  if (!path.endsWith('/')) {
-    path += '/';
-  }
-  return path;
-}
-
 export function basename(originalPath: string) {
   const path = removeTrailingSlash(originalPath);
   const lastSlashIndex = path.lastIndexOf('/');
@@ -43,7 +35,7 @@ export function relative(from: string, to: string): string {
   return upSegments.concat(downSegments).join('/');
 }
 
-function removeTrailingSlash(str: string) {
+export function removeTrailingSlash(str: string) {
   return str.replace(/\/+$/, '');
 }
 

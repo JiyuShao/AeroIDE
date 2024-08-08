@@ -12,25 +12,18 @@ abstract class BaseStorage<T> extends AutoInitClass {
   abstract getAllKeys(): Promise<string[]>;
 
   abstract delete(key: string): Promise<void>;
+  abstract reset(): Promise<void>;
 }
 
-// class BrowserStorage extends BaseStorage<StorageData> {
-//   constructor(context: vscode.ExtensionContext) {
-//     super(context);
-//   }
-//   async put() {}
-//   async get() {}
-//   async getAllKeys(): Promise<string[]> {}
-//   async delete() {}
-// }
-
-class NodeStorage extends BaseStorage<StorageData> {
+class VSCodeExtentionStorage extends BaseStorage<StorageData> {
   private _persistUri: vscode.Uri;
 
   constructor(context: vscode.ExtensionContext) {
     super();
     if (!context.globalStorageUri) {
-      throw new Error('NodeStorage context.globalStorageUri is undefined');
+      throw new Error(
+        'VSCodeExtentionStorage context.globalStorageUri is undefined'
+      );
     }
     this._persistUri = vscode.Uri.joinPath(
       context.globalStorageUri,
@@ -87,8 +80,15 @@ class NodeStorage extends BaseStorage<StorageData> {
       vscode.Uri.joinPath(this._persistUri, key)
     );
   }
+
+  @autoInit
+  async reset() {
+    const keys = await this.getAllKeys();
+    for (const key of keys) {
+      await this.delete(key);
+    }
+  }
 }
 
-// export const Storage = isWebEnv ? BrowserStorage : NodeStorage;
-export type IStorage = NodeStorage;
-export const Storage = NodeStorage;
+export type IStorage = VSCodeExtentionStorage;
+export const Storage = VSCodeExtentionStorage;

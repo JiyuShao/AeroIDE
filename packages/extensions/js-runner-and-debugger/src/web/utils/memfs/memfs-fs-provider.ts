@@ -142,31 +142,28 @@ export class MemFS extends AutoInitClass implements vscode.FileSystemProvider {
       const uri = this._convertFileKeyToUri(key);
       const baseFile = BaseFile.fromUnit8Array(rawData);
       if (baseFile instanceof Directory) {
-        const baseFolderKey = uri.path.endsWith('/')
-          ? uri.path
-          : `${uri.path}/`;
         // ingnore root folder
-        if (fileMap[baseFolderKey]) {
+        if (fileMap[uri.path]) {
           continue;
         }
 
         // add folder
-        if (!fileMap[path.dirpath(uri.path)]) {
+        if (!fileMap[path.dirname(uri.path)]) {
           logger.error(
-            `Load from storage failed: ${path.dirpath(uri.path)} not found`
+            `Load from storage failed: ${path.dirname(uri.path)} not found`
           );
           continue;
         }
-        fileMap[path.dirpath(uri.path)].entries.set(
+        fileMap[path.dirname(uri.path)].entries.set(
           path.basename(uri.path),
           baseFile
         );
-        fileMap[baseFolderKey] = baseFile;
+        fileMap[uri.path] = baseFile;
       } else if (baseFile instanceof File) {
-        const currentFolder = fileMap[path.dirpath(uri.path)];
+        const currentFolder = fileMap[path.dirname(uri.path)];
         if (!currentFolder) {
           logger.error(
-            `Load from storage failed: ${path.dirpath(uri.path)} not found`
+            `Load from storage failed: ${path.dirname(uri.path)} not found`
           );
           continue;
         }
@@ -275,7 +272,7 @@ export class MemFS extends AutoInitClass implements vscode.FileSystemProvider {
 
   @autoInit
   async delete(uri: vscode.Uri): Promise<void> {
-    const dirUri = vscode.Uri.parse(`${FS_SCHEME}:${path.dirpath(uri.path)}`);
+    const dirUri = vscode.Uri.parse(`${FS_SCHEME}:${path.dirname(uri.path)}`);
     const basename = path.basename(uri.path);
     const parent = this._lookupAsDirectory(dirUri, false);
     if (!parent.entries.has(basename)) {
@@ -297,7 +294,7 @@ export class MemFS extends AutoInitClass implements vscode.FileSystemProvider {
   @autoInit
   async createDirectory(uri: vscode.Uri): Promise<void> {
     const basename = path.basename(uri.path);
-    const dirUri = vscode.Uri.parse(`${FS_SCHEME}:${path.dirpath(uri.path)}`);
+    const dirUri = vscode.Uri.parse(`${FS_SCHEME}:${path.dirname(uri.path)}`);
     const parent = this._lookupAsDirectory(dirUri, false);
     const entry = new Directory(basename);
     parent.entries.set(entry.name, entry);
@@ -364,7 +361,7 @@ export class MemFS extends AutoInitClass implements vscode.FileSystemProvider {
   }
 
   private _lookupParentDirectory(uri: vscode.Uri): Directory {
-    const dirUri = vscode.Uri.parse(`${FS_SCHEME}:${path.dirpath(uri.path)}`);
+    const dirUri = vscode.Uri.parse(`${FS_SCHEME}:${path.dirname(uri.path)}`);
     return this._lookupAsDirectory(dirUri, false);
   }
 
@@ -408,16 +405,18 @@ export class MemFS extends AutoInitClass implements vscode.FileSystemProvider {
   public async reset(
     uri: vscode.Uri = vscode.Uri.parse(`${FS_SCHEME}:${this._root.name}`)
   ) {
-    for (const [name, fileType] of await this.readDirectory(uri)) {
+    for (const [name] of await this.readDirectory(uri)) {
       try {
-        await this.delete(
-          vscode.Uri.parse(
-            `${FS_SCHEME}:/${name}${fileType === vscode.FileType.Directory ? '/' : ''}`
-          )
-        );
+        await this.delete(vscode.Uri.parse(`${FS_SCHEME}:/${name}`));
       } catch (error) {
         logger.error('MemFS.reset failed:', error);
       }
+    }
+    try {
+      // delete all local storage
+      await this._storage.reset();
+    } catch (error) {
+      logger.error('MemFS.reset failed:', error);
     }
   }
 
@@ -500,7 +499,9 @@ export class MemFS extends AutoInitClass implements vscode.FileSystemProvider {
       for (const currentFileMeta of Object.values(currentItem.zip.files)) {
         if (currentFileMeta.dir) {
           await this.createDirectory(
-            vscode.Uri.parse(`${FS_SCHEME}:/${currentFileMeta.name}`)
+            vscode.Uri.parse(
+              `${FS_SCHEME}:/${path.removeTrailingSlash(currentFileMeta.name)}`
+            )
           );
         } else {
           const currentFileContent = await currentItem.zip
