@@ -4,7 +4,7 @@ import { injectable } from '../../../utils/webview';
 import { FS_SCHEME } from '../../../config';
 import { loadDependencies, Manifest } from '../../../utils/sandpack-core';
 import { logger } from '../../../utils/logger';
-import { writeFile } from '../../../utils/file';
+import { writeFile, deleteFile, deleteDir } from '../../../utils/file';
 // import { dirname } from '../../../utils/paths';
 
 @injectable()
@@ -53,38 +53,54 @@ export class NpmClient extends Client {
   }
   async init() {
     const key = this.#uri.path;
-    if (this.#projectsState[key]) {
-      if (this.#projectsState[key].status === 'installing') {
-        return;
-      } else if (this.#projectsState[key].status === 'success') {
-        // TODO
+    if (!this.#projectsState[key]) {
+      this.#projectsState[key] = {
+        status: 'failed',
+        dependenciesState: {},
+      };
+    }
+    const currentProject = this.#projectsState[key];
+    const dependencies = await this.getAllPackages();
+
+    if (currentProject.status === 'installing') {
+      return;
+    } else if (currentProject.status === 'success') {
+      let isInited = true;
+      for (const currentDep of dependencies) {
+        if (
+          !currentProject.dependenciesState[currentDep.name] ||
+          currentProject.dependenciesState[currentDep.name].version !==
+            currentDep.version ||
+          currentProject.dependenciesState[currentDep.name].status !== 'success'
+        ) {
+          isInited = false;
+        }
+      }
+      if (isInited) {
         return;
       }
     }
-
-    this.#projectsState[key] = {
-      status: 'installing',
-      dependenciesState: {},
-    };
-    const currentProject = this.#projectsState[key];
-
-    const dependencies = await this.getAllPackages();
     try {
+      currentProject.status = 'installing';
+      await deleteDir(vscode.Uri.parse(`${FS_SCHEME}:/node_modules`));
       await this.install({ packages: dependencies });
       currentProject.status = 'success';
     } catch (_error) {
       currentProject.status = 'failed';
     }
   }
-  async install(options: {
-    packages: { name: string; version: string }[];
-    isDev?: boolean;
-  }) {
+  async install(options: { packages: { name: string; version: string }[] }) {
     const key = this.#uri.path;
     if (!this.#projectsState[key]) {
       return;
     }
     const currentProject = this.#projectsState[key];
+    const packagesWithoutTypings = options.packages.filter(currentPkg => {
+      return !currentPkg.name.includes('@types');
+    });
+    if (packagesWithoutTypings.length === 0) {
+      return;
+    }
 
     await vscode.window.withProgress(
       {
@@ -92,13 +108,15 @@ export class NpmClient extends Client {
       },
       async (progress, token) => {
         // The total number of steps, if known.
-        const totalSteps = options.packages.length;
-
-        for (const [currentIndex, currentPkg] of options.packages.entries()) {
+        const totalSteps = packagesWithoutTypings.length;
+        for (const [
+          currentIndex,
+          currentPkg,
+        ] of packagesWithoutTypings.entries()) {
           // Update the progress bar
           progress.report({
             increment: currentIndex,
-            message: `Installing ${options.isDev ? 'dev ' : ''}dependency ${currentPkg.name}@${currentPkg.version}`,
+            message: `Installing dependency ${currentPkg.name}@${currentPkg.version}`,
           });
 
           currentProject.dependenciesState[currentPkg.name] = {
@@ -147,7 +165,7 @@ export class NpmClient extends Client {
           } catch (error) {
             currentPkgState.status = 'failed';
             logger.error(
-              `Install ${options.isDev ? 'dev ' : ''}dependency ${currentPkg.name}@${currentPkg.version} failed`,
+              `Install dependency ${currentPkg.name}@${currentPkg.version} failed`,
               error
             );
             throw error;
@@ -160,24 +178,23 @@ export class NpmClient extends Client {
       }
     );
   }
-  async update(_options: { query: string }) {
-    // const args = ['update', ...query.split(' ')];
-    // spawn.sync('npm', args, {
-    //   stdio: 'inherit',
-    //   cwd: this.#cwd,
-    //   windowsHide: true,
-    //   shell: false,
-    // });
-    this.updatePackageJSON();
+  async update(options: { packages: { name: string; version: string }[] }) {
+    await this.install({ packages: options.packages });
   }
-  async remove(_options: { packages: string[] }) {
-    console.log(_options);
-    // spawn.sync('npm', ['remove', ...packages], {
-    //   stdio: 'inherit',
-    //   cwd: this.#cwd,
-    //   windowsHide: true,
-    //   shell: false,
-    // });
+  async remove(options: { packages: string[] }) {
+    const key = this.#uri.path;
+    if (!this.#projectsState[key]) {
+      return;
+    }
+    const currentProject = this.#projectsState[key];
+    for (const currentPkg of options.packages) {
+      const currentPkgState = currentProject.dependenciesState[currentPkg];
+      for (const currentContentUrl of currentPkgState.manifest?.contentUrls ||
+        []) {
+        await deleteFile(vscode.Uri.parse(`${FS_SCHEME}:${currentContentUrl}`));
+      }
+      delete currentProject.dependenciesState[currentPkg];
+    }
     this.updatePackageJSON();
   }
   private async updatePackageJSON() {
@@ -200,6 +217,7 @@ export class NpmClient extends Client {
           currentProject.dependenciesState[currentPkgName].version,
       };
     }, {});
+    delete packageJson.devDependencies;
     await vscode.workspace.fs.writeFile(
       packageJsonUri,
       new TextEncoder().encode(JSON.stringify(packageJson, null, 4))

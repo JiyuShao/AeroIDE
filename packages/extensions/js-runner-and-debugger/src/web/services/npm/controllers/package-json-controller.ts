@@ -35,7 +35,6 @@ export class PackageJsonController extends Controller {
     const client = await this.clientManager.getClient(data.packageJSON);
     client.install({
       packages: data.packages,
-      isDev: data.dev,
     });
     return {};
   }
@@ -44,16 +43,13 @@ export class PackageJsonController extends Controller {
     packages: { name: string; maxSatisfyingVersion: string }[];
     packageJSON: string;
   }) {
-    const query = data.packages
-      .map(item => {
-        if (item.maxSatisfyingVersion) {
-          return `${item.name}@${item.maxSatisfyingVersion}`;
-        }
-        return item.name;
-      })
-      .join(' ');
     const client = await this.clientManager.getClient(data.packageJSON);
-    client.update({ query });
+    client.update({
+      packages: data.packages.map(e => ({
+        name: e.name,
+        version: e.maxSatisfyingVersion,
+      })),
+    });
     return {};
   }
 

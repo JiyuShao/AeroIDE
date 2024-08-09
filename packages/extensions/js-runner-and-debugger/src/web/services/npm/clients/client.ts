@@ -13,9 +13,10 @@ export abstract class Client {
   >;
   abstract init(): void;
   abstract install(args: {
-    packages: { name: string; version?: string }[];
-    isDev?: boolean;
+    packages: { name: string; version: string }[];
   }): void;
-  abstract update(args: { query: string }): void;
+  abstract update(args: {
+    packages: { name: string; version: string }[];
+  }): void;
   abstract remove(args: { packages: string[] }): void;
 }
