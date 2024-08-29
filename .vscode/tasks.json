@@ -4,20 +4,20 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "compile-web:packages/extensions/js-runner-and-debugger",
+      "label": "compile:packages/extensions/js-runner-and-debugger",
       "path": "packages/extensions/js-runner-and-debugger",
       "type": "npm",
-      "script": "compile-web",
+      "script": "compile",
       "group": {
         "kind": "build"
       },
       "problemMatcher": ["$ts-webpack", "$tslint-webpack"]
     },
     {
-      "label": "watch-web:packages/extensions/js-runner-and-debugger",
+      "label": "watch:packages/extensions/js-runner-and-debugger",
       "path": "packages/extensions/js-runner-and-debugger",
       "type": "npm",
-      "script": "watch-web",
+      "script": "watch",
       "group": "build",
       "isBackground": true,
       "problemMatcher": ["$ts-webpack-watch", "$tslint-webpack-watch"]

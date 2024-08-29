@@ -13,8 +13,8 @@
   "activationEvents": [
     "onFileSystem:memfs"
   ],
-  "main": "./dist/web/extension.js",
-  "browser": "./dist/web/extension.js",
+  "main": "./dist/extension.js",
+  "browser": "./dist/extension.js",
   "preview": true,
   "enabledApiProposals": [
     "textSearchProvider",
@@ -135,12 +135,11 @@
     }
   },
   "scripts": {
-    "test": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/web/test/suite/index.js",
-    "pretest": "pnpm run compile-web",
-    "vscode:prepublish": "pnpm run package-web",
-    "compile-web": "webpack",
-    "watch-web": "webpack --watch",
-    "package-web": "webpack --mode production --devtool hidden-source-map",
+    "test": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/test/suite/index.js",
+    "pretest": "pnpm run compile",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "build": "webpack --mode production --devtool hidden-source-map",
     "lint": "eslint . --cache --quiet",
     "fix": "eslint . --cache --quiet --fix",
     "run-in-browser": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. ."
@@ -148,6 +147,7 @@
   "devDependencies": {
     "@aeroide/eslint-config": "workspace:^0.0.0",
     "@aeroide/typescript-config": "workspace:^0.0.0",
+    "@aeroide/webview-ui": "workspace:^0.0.1",
     "@types/assert": "^1.5.10",
     "@types/gensync": "^1.0.4",
     "@types/lodash-es": "^4.17.12",
@@ -160,7 +160,9 @@
     "@vscode/test-web": "^0.0.54",
     "@vscode/wasm-wasi": "0.13.0-pre.1",
     "assert": "^2.1.0",
+    "copy-webpack-plugin": "^12.0.2",
     "esbuild-wasm": "^0.21.3",
+    "eslint": "^9.2.0",
     "gensync": "1.0.0-beta.2",
     "inversify": "^6.0.2",
     "inversify-props": "^2.2.6",

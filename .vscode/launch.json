@@ -17,9 +17,9 @@
         "undefined_publisher.@aeroide/js-runner-and-debugger"
       ],
       "outFiles": [
-        "${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/web/**/*.js"
+        "${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/**/*.js"
       ],
-      "preLaunchTask": "compile-web:packages/extensions/js-runner-and-debugger"
+      "preLaunchTask": "compile:packages/extensions/js-runner-and-debugger"
     },
     {
       "name": "Run Web Extension: JS Runner and Debugger",
@@ -35,9 +35,24 @@
         "undefined_publisher.@aeroide/js-runner-and-debugger"
       ],
       "outFiles": [
-        "${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/web/**/*.js"
+        "${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/*.js"
       ],
-      "preLaunchTask": "compile-web:packages/extensions/js-runner-and-debugger"
+      "preLaunchTask": "compile:packages/extensions/js-runner-and-debugger"
+    },
+    {
+      "name": "Run Local Extension: JS Runner and Debugger",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        // "--profile-temp",
+        "--profile=VS Code Extension Debug",
+        "--extensionDevelopmentPath=${workspaceFolder}/packages/extensions/js-runner-and-debugger",
+        "--enable-proposed-api",
+        "undefined_publisher.@aeroide/js-runner-and-debugger"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/*.js"
+      ]
     },
     {
       "name": "Extension Tests: JS Runner and Debugger",
@@ -47,12 +62,12 @@
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}/packages/extensions/js-runner-and-debugger",
         "--extensionDevelopmentKind=web",
-        "--extensionTestsPath=${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/web/test/suite/index"
+        "--extensionTestsPath=${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/test/suite/index"
       ],
       "outFiles": [
-        "${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/web/**/*.js"
+        "${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/*.js"
       ],
-      "preLaunchTask": "watch-web:packages/extensions/js-runner-and-debugger"
+      "preLaunchTask": "watch:packages/extensions/js-runner-and-debugger"
     }
   ]
 }

@@ -1,4 +1,4 @@
-import delay from '../../../../../utils/delay';
+import delay from '../../../../delay';
 
 export async function fetchWithRetries(
   url: string,

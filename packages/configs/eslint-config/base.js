@@ -11,6 +11,7 @@ export default [
       '.*.js',
       'node_modules/',
       'dist/',
+      'assets/',
     ],
   },
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },

@@ -3,20 +3,25 @@
 
 const path = require('path');
 const webpack = require('webpack');
+const CopyPlugin = require('copy-webpack-plugin');
 
 /** @type WebpackConfig */
 const webExtensionConfig = {
   mode: 'none', // this leaves the source code as close as possible to the original (when packaging we set this to 'production')
   target: 'webworker', // extensions run in a webworker context
   entry: {
-    extension: './src/web/extension.ts',
-    'test/suite/index': './src/web/test/suite/index.ts',
+    extension: './src/extension.ts',
+    'test/suite/index': './src/test/suite/index.ts',
   },
   output: {
     filename: '[name].js',
-    path: path.join(__dirname, './dist/web'),
+    path: path.join(__dirname, './dist'),
     libraryTarget: 'commonjs',
-    devtoolModuleFilenameTemplate: '../../[resource-path]',
+    devtoolModuleFilenameTemplate: '../[resource-path]',
+    clean: true,
+  },
+  optimization: {
+    minimize: false,
   },
   resolve: {
     mainFields: ['browser', 'module', 'main'], // look for `browser` entry point in imported node modules
@@ -58,6 +63,9 @@ const webExtensionConfig = {
     }),
     new webpack.ProvidePlugin({
       process: 'process/browser', // provide a shim for the global `process` variable
+    }),
+    new CopyPlugin({
+      patterns: [{ from: 'assets', to: 'assets' }],
     }),
   ],
   externals: {

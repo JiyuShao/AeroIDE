@@ -18,7 +18,7 @@ const DEV_URLS = {
     'https://xi5p9f7czk.execute-api.eu-west-1.amazonaws.com/dev/packages',
   bucket: 'https://dev-packager-packages.codesandbox.io',
 };
-// eslint-disable-next-line
+
 const PROD_URLS = {
   packager:
     'https://aiwi8rnkp5.execute-api.eu-west-1.amazonaws.com/prod/packages',
