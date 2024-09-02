@@ -5,8 +5,7 @@
       "dependsOn": ["^build"],
       "cache": false
     },
-    "dev": {
-      "dependsOn": ["^dev"],
+    "watch": {
       "cache": false,
       "persistent": true
     },
@@ -18,6 +17,14 @@
     },
     "clean": {
       "outputs": []
+    },
+    "package": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "publish": {
+      "dependsOn": ["package"],
+      "cache": false
     },
     "test": {
       "outputs": ["coverage/**/*"],

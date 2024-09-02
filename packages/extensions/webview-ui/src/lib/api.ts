@@ -142,9 +142,7 @@ export class API {
     return API.updatePackages({ packages: [{ name }] });
   }
   static getConfig() {
-    return API.vscode.fetch.get<{
-      showAnalyzeTab: boolean;
-    }>('/config');
+    return API.vscode.fetch.get('/config');
   }
 }
 

@@ -23,7 +23,6 @@ export interface State {
     showShortcuts: boolean;
     showResultDescription: boolean;
     excludeVersions: string[];
-    showAnalyzeTab: boolean;
     showAlgoliaInfo: boolean;
     maxNumberOfResults: number;
     analyze: {
@@ -49,7 +48,6 @@ export const store = createStore<State>({
     config: {
       showShortcuts: true,
       showResultDescription: true,
-      showAnalyzeTab: true,
       excludeVersions: [],
       showAlgoliaInfo: true,
       maxNumberOfResults: 4,

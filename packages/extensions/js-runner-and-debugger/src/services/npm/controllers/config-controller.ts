@@ -5,7 +5,6 @@ export class ConfigController extends Controller {
   async getConfig() {
     const config = workspace.getConfiguration('js-runner-and-debugger.npm');
     return {
-      showAnalyzeTab: config.get('showAnalyzeTab'),
       showResultDescription: config.get('showResultDescription'),
       excludeVersions: config.get('excludeVersions'),
       showAlgoliaInfo: config.get('showAlgoliaInfo'),
