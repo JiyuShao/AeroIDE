@@ -14,7 +14,7 @@
         "--profile=VS Code Extension Debug",
         "--extensionDevelopmentPath=${workspaceFolder}/packages/extensions/js-runner-and-debugger",
         "--enable-proposed-api",
-        "undefined_publisher.@aeroide/js-runner-and-debugger"
+        "jiyu-shao.js-runner-and-debugger"
       ],
       "outFiles": [
         "${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/*.js"
@@ -31,12 +31,11 @@
         "--extensionDevelopmentPath=${workspaceFolder}/packages/extensions/js-runner-and-debugger",
         "--extensionDevelopmentKind=web",
         "--enable-proposed-api",
-        "undefined_publisher.@aeroide/js-runner-and-debugger"
+        "jiyu-shao.js-runner-and-debugger"
       ],
       "outFiles": [
         "${workspaceFolder}/packages/extensions/js-runner-and-debugger/dist/*.js"
-      ],
-      "preLaunchTask": "compile:packages/extensions/js-runner-and-debugger"
+      ]
     },
     {
       "name": "Extension Tests: JS Runner and Debugger",

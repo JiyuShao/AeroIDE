@@ -67,7 +67,7 @@ importers:
       '@typescript-eslint/parser': ^7.7.1
       '@vscode/test-web': ^0.0.54
       '@vscode/vsce': ^3.0.0
-      '@vscode/wasm-wasi': 0.13.0-pre.1
+      '@vscode/wasm-wasi': 1.0.1
       assert: ^2.1.0
       copy-webpack-plugin: ^12.0.2
       esbuild-wasm: ^0.21.3
@@ -102,7 +102,7 @@ importers:
       '@typescript-eslint/parser': 7.8.0_im6dxqfxycpa4z3wrywu4gehg4
       '@vscode/test-web': 0.0.54
       '@vscode/vsce': 3.0.0
-      '@vscode/wasm-wasi': 0.13.0-pre.1
+      '@vscode/wasm-wasi': 1.0.1
       assert: 2.1.0
       copy-webpack-plugin: 12.0.2_webpack@5.91.0
       esbuild-wasm: 0.21.3
@@ -1675,9 +1675,9 @@ packages:
       - supports-color
     dev: true
 
-  /@vscode/wasm-wasi/0.13.0-pre.1:
-    resolution: {integrity: sha512-1w3GSGjuoWA66FQ6asO1io4UmyjnmbFgi+dFrM+uUrKBJ7Wd/Y0Eac2KfBo1hickdyGWKlS4nJj3ztBkyuv//g==}
-    engines: {node: '>=16.17.1', vscode: ^1.78.0}
+  /@vscode/wasm-wasi/1.0.1:
+    resolution: {integrity: sha512-sqzRASxeXNO9PGZxcRGMI6DeCaxX5qfTcYO0eorG2RLiJKOgNW2Ke2J1/vS1X693a27IF5jXWqqDdwN/qcF4pg==}
+    engines: {node: '>=20.9.0', vscode: ^1.88.0}
     hasBin: true
     dependencies:
       semver: 7.6.2

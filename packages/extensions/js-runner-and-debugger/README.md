@@ -23,6 +23,16 @@
   - [ ] 实现 JS 在线打包逻辑
   - [ ] 实现 JS 在线运行/调试逻辑
 
+## Thanks
+
+本项目的实现离不开以下项目的启发：
+
+- [https://github.com/Idered/iridium](https://github.com/Idered/iridium)
+- [https://github.com/eamodio/vscode-remotehub](https://github.com/eamodio/vscode-remotehub)
+- [https://github.com/SchoofsKelvin/vscode-sshfs](https://github.com/SchoofsKelvin/vscode-sshfs)
+- [https://github.com/microsoft/vscode-anycode](https://github.com/microsoft/vscode-anycode)
+- [https://github.com/codesandbox/codesandbox-client/tree/master/packages/sandpack-core](https://github.com/codesandbox/codesandbox-client/tree/master/packages/sandpack-core)
+
 ## Release Notes
 
 ### 0.0.1

@@ -6,7 +6,7 @@ import {
   WasmPseudoterminal as OrignalWasmPseudoterminal,
   WasmProcess,
   PseudoterminalState,
-} from '@vscode/wasm-wasi';
+} from '@vscode/wasm-wasi/v1';
 import { logger } from './logger';
 import { ansiColor } from './ansi-color';
 import { CancelManager } from './cancel-manager';
