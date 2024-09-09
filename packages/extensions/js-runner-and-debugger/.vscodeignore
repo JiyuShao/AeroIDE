@@ -19,5 +19,4 @@ eslint.config.mjs
 
 .turbo/**
 .vscode/**
-assets/**
 **/test/**

@@ -3,7 +3,6 @@
 
 const path = require('path');
 const webpack = require('webpack');
-const CopyPlugin = require('copy-webpack-plugin');
 
 /** @type WebpackConfig */
 const webExtensionConfig = {
@@ -21,7 +20,7 @@ const webExtensionConfig = {
     clean: true,
   },
   optimization: {
-    minimize: false,
+    // minimize: false,
   },
   resolve: {
     mainFields: ['browser', 'module', 'main'], // look for `browser` entry point in imported node modules
@@ -63,9 +62,6 @@ const webExtensionConfig = {
     }),
     new webpack.ProvidePlugin({
       process: 'process/browser', // provide a shim for the global `process` variable
-    }),
-    new CopyPlugin({
-      patterns: [{ from: 'assets', to: 'assets' }],
     }),
   ],
   externals: {

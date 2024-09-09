@@ -12,6 +12,7 @@ export default [
       'node_modules/',
       'dist/',
       'assets/',
+      '.vscode-test-web',
     ],
   },
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },

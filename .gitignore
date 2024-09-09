@@ -213,3 +213,6 @@ sketch
 
 # turbo
 .turbo
+
+# vscode-test-web
+.vscode-test-web
