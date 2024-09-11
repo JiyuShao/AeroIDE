@@ -17,7 +17,8 @@
     "package": "turbo run package",
     "publish": "turbo run publish",
     "test": "turlo run test",
-    "test:coverage": "pnpm run link && turbo run test:coverage"
+    "test:coverage": "pnpm run link && turbo run test:coverage",
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s"
   },
   "keywords": [],
   "author": "Jiyu Shao <jiyu.shao@gmail.com>",
@@ -32,6 +33,7 @@
     "@commitlint/cz-commitlint": "^19.2.0",
     "@types/node": "^20.12.11",
     "commitizen": "^4.3.0",
+    "conventional-changelog-cli": "^5.0.0",
     "globals": "^15.1.0",
     "husky": "^9.0.11",
     "inquirer": "^9.2.20",

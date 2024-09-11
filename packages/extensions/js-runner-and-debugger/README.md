@@ -1,6 +1,10 @@
-# js-runner-and-debugger README
+# js-runner-and-debugger
 
-基于浏览器的在线代码编辑器插件
+基于浏览器的在线代码编辑器插件，欢迎各位大佬来交流鸭
+
+![IDE Intro](https://raw.githubusercontent.com/JiyuShao/AeroIDE/main/assets/ide-intro.png)
+![NPM Intro1](https://raw.githubusercontent.com/JiyuShao/AeroIDE/main/assets/npm-intro1.png)
+![NPM Intro2](https://raw.githubusercontent.com/JiyuShao/AeroIDE/main/assets/npm-intro2.png)
 
 ## Features
 
@@ -20,7 +24,7 @@
   - [x] 实现命令行历史记录能力
 - [ ] JS 在线开发调试
   - [x] 支持 NPM 包
-  - [ ] 实现 JS 在线打包逻辑
+  - [x] 实现 JS 在线打包逻辑
   - [ ] 实现 JS 在线运行/调试逻辑
 
 ## Thanks
@@ -37,4 +41,4 @@
 
 ### 0.0.1
 
-Initial release of js-runner-and-debugger
+初次发布，实现虚拟工作区、虚拟中的、JS NPM 包管理功能

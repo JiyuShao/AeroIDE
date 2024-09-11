@@ -2,11 +2,11 @@
 
 Yet Another IDE: 基于浏览器的在线代码编辑器，欢迎各位大佬来交流鸭
 
-## Features
-
 ![IDE Intro](./assets/ide-intro.png)
 ![NPM Intro1](./assets/npm-intro1.png)
 ![NPM Intro2](./assets/npm-intro2.png)
+
+## Features
 
 - [x] 虚拟工作区
   - [x] 浏览器内虚拟文件系统
@@ -26,6 +26,10 @@ Yet Another IDE: 基于浏览器的在线代码编辑器，欢迎各位大佬来
   - [x] 支持 NPM 包
   - [x] 实现 JS 在线打包逻辑（esbuild 打包）
   - [ ] 实现 JS 在线运行/调试逻辑
+
+## CHANGELOG
+
+详见 [CHANGELOG.md](./CHANGELOG.md)
 
 ## Contributing
 
